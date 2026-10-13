@@ -127,9 +127,9 @@
       game_block_blast: 'Block Blast', game_tictactoe: 'Tic Tac Toe', game_oneline: 'One Line',
       game_watersort: 'Water Sort', game_fruitmerge: 'Fruit Merge', game_whack: 'Đập Chuột',
       desc_block_blast: 'Kéo thả khối, lấp đầy hàng ngang hoặc dọc để phá hủy',
-      desc_tictactoe: 'Đấu với máy trong 5 ván', desc_oneline: 'Nối mọi cạnh bằng một nét vẽ',
-      desc_watersort: 'Phân loại màu vào từng ống', desc_fruitmerge: 'Thả và gộp trái cây giống nhau',
-      desc_whack: 'Đập chuột trong 30 giây',
+      desc_tictactoe: 'Đấu với máy, không giới hạn số ván', desc_oneline: 'Nối mọi cạnh bằng một nét vẽ',
+      desc_watersort: 'Phân loại màu vào từng ống', desc_fruitmerge: 'Thả trái cây, chúng lăn và gộp vào nhau',
+      desc_whack: 'Đập chuột với 3 mạng, chơi không giới hạn',
       ok: 'Đồng ý', cancel: 'Hủy', score_label: 'ĐIỂM', best_label: 'CAO NHẤT',
       end_title: 'Kết thúc!', end_new_record: '🏆 Kỷ lục mới!', end_best: 'Điểm cao nhất: {0}',
       end_coins: 'Xu nhận được: +{0} 🪙', end_replay: 'Chơi lại', end_home: 'Về trang chủ',
@@ -144,20 +144,20 @@
       bb_rotate: 'Xoay', bb_reroll: 'Đổi khối', bb_bomb: 'Bom',
       bb_hint_rotate: 'Chạm vào một khối ở khay để xoay', bb_hint_bomb: 'Chạm vào bảng để đặt bom (xóa vùng 3x3)',
       bb_combo: 'COMBO x{0}', bb_perfect: 'HOÀN HẢO!',
-      ttt_choose_level: 'Chọn độ khó', ttt_easy: 'Dễ', ttt_hard: 'Khó', ttt_round: 'Ván {0}/{1}',
+      ttt_choose_level: 'Chọn độ khó', ttt_easy: 'Dễ', ttt_hard: 'Khó', ttt_round: 'Ván {0}',
       ttt_your_turn: 'Lượt của bạn (X)', ttt_ai_turn: 'Máy đang nghĩ…', ttt_win: 'Bạn thắng! +3 điểm',
       ttt_lose: 'Bạn thua! +0 điểm', ttt_draw: 'Hòa! +1 điểm', ttt_next: 'Ván tiếp',
       ttt_finish: 'Xem kết quả', ttt_hint: 'Gợi ý',
-      ol_level: 'Màn {0}/{1}', ol_instruction: 'Vẽ một nét đi qua mọi cạnh, mỗi cạnh đúng một lần',
+      ol_level: 'Màn {0}', ol_instruction: 'Bắt đầu ở điểm bất kỳ, vẽ một nét đi qua mọi cạnh, mỗi cạnh đúng một lần', ol_stuck: 'Bế tắc rồi! Hãy Hoàn tác hoặc Làm lại.',
       ol_undo: 'Hoàn tác', ol_reset: 'Làm lại', ol_hint: 'Gợi ý', ol_solved: 'Hoàn thành màn!',
       ol_next: 'Màn tiếp',
       ws_level: 'Màn {0}', ws_moves: 'Lượt: {0}', ws_instruction: 'Chạm ống nguồn rồi chạm ống đích để rót nước',
       ws_undo: 'Hoàn tác', ws_restart: 'Làm lại', ws_add_tube: 'Thêm ống', ws_solved: 'Hoàn thành màn!',
       ws_next: 'Màn tiếp',
-      fm_next: 'Tiếp theo', fm_instruction: 'Chạm vào cột để thả trái cây. Hai trái giống nhau sẽ gộp thành trái lớn hơn!',
+      fm_next: 'Tiếp theo', fm_instruction: 'Kéo để chọn chỗ, thả tay để thả trái cây. Hai trái giống nhau chạm nhau sẽ gộp lại!',
       fm_swap: 'Đổi trái', fm_hammer: 'Búa', fm_hint_hammer: 'Chạm vào một trái cây để đập',
-      wm_time: '⏱ {0} giây', wm_start: 'Bắt đầu', wm_instruction: 'Chạm vào chuột để đập! Chuột vàng +3 điểm. Tránh quả bom!',
-      wm_plus_time: '+10 giây'
+      wm_start: 'Bắt đầu', wm_instruction: 'Đập chuột! Chuột vàng +3 điểm. Để chuột chạy mất hoặc đập bom sẽ mất 1 mạng.',
+      wm_plus_life: '+1 mạng', finish: '🏁 Kết thúc'
     },
     en: {
       app_name: 'Puzzle Hub', hub_subtitle: 'Your offline puzzle paradise',
@@ -166,9 +166,9 @@
       game_block_blast: 'Block Blast', game_tictactoe: 'Tic Tac Toe', game_oneline: 'One Line',
       game_watersort: 'Water Sort', game_fruitmerge: 'Fruit Merge', game_whack: 'Whack-a-Mole',
       desc_block_blast: 'Drag blocks and fill rows or columns to blast them',
-      desc_tictactoe: 'Beat the AI in 5 rounds', desc_oneline: 'Trace every edge in one stroke',
-      desc_watersort: 'Sort the colors into tubes', desc_fruitmerge: 'Drop and merge matching fruits',
-      desc_whack: 'Whack moles in 30 seconds',
+      desc_tictactoe: 'Play the AI, unlimited rounds', desc_oneline: 'Trace every edge in one stroke',
+      desc_watersort: 'Sort the colors into tubes', desc_fruitmerge: 'Drop fruits, they roll and merge',
+      desc_whack: 'Whack moles with 3 lives, endless',
       ok: 'OK', cancel: 'Cancel', score_label: 'SCORE', best_label: 'BEST',
       end_title: 'Game over!', end_new_record: '🏆 New record!', end_best: 'Best score: {0}',
       end_coins: 'Coins earned: +{0} 🪙', end_replay: 'Play again', end_home: 'Home',
@@ -183,19 +183,19 @@
       bb_rotate: 'Rotate', bb_reroll: 'Reroll', bb_bomb: 'Bomb',
       bb_hint_rotate: 'Tap a piece in the tray to rotate it', bb_hint_bomb: 'Tap the board to drop a bomb (clears a 3x3 area)',
       bb_combo: 'COMBO x{0}', bb_perfect: 'PERFECT!',
-      ttt_choose_level: 'Choose difficulty', ttt_easy: 'Easy', ttt_hard: 'Hard', ttt_round: 'Round {0}/{1}',
+      ttt_choose_level: 'Choose difficulty', ttt_easy: 'Easy', ttt_hard: 'Hard', ttt_round: 'Round {0}',
       ttt_your_turn: 'Your turn (X)', ttt_ai_turn: 'AI is thinking…', ttt_win: 'You win! +3 points',
       ttt_lose: 'You lose! +0 points', ttt_draw: 'Draw! +1 point', ttt_next: 'Next round',
       ttt_finish: 'See results', ttt_hint: 'Hint',
-      ol_level: 'Level {0}/{1}', ol_instruction: 'Draw one stroke through every edge, each exactly once',
+      ol_level: 'Level {0}', ol_instruction: 'Start anywhere and draw one stroke through every edge, each exactly once', ol_stuck: 'Stuck! Undo or reset.',
       ol_undo: 'Undo', ol_reset: 'Reset', ol_hint: 'Hint', ol_solved: 'Level complete!', ol_next: 'Next level',
       ws_level: 'Level {0}', ws_moves: 'Moves: {0}', ws_instruction: 'Tap a source tube, then a target tube to pour',
       ws_undo: 'Undo', ws_restart: 'Restart', ws_add_tube: 'Add tube', ws_solved: 'Level complete!',
       ws_next: 'Next level',
-      fm_next: 'Next', fm_instruction: 'Tap a column to drop the fruit. Two equal fruits merge into a bigger one!',
+      fm_next: 'Next', fm_instruction: 'Drag to aim, release to drop. Matching fruits that touch merge!',
       fm_swap: 'Swap', fm_hammer: 'Hammer', fm_hint_hammer: 'Tap a fruit to smash it',
-      wm_time: '⏱ {0} s', wm_start: 'Start', wm_instruction: 'Tap the moles! Golden mole +3 points. Avoid the bombs!',
-      wm_plus_time: '+10 sec'
+      wm_start: 'Start', wm_instruction: 'Whack the moles! Golden +3. Letting a mole escape or hitting a bomb costs 1 life.',
+      wm_plus_life: '+1 life', finish: '🏁 Finish'
     }
   };
 
@@ -254,24 +254,74 @@
       });
     }
 
+    // Nhạc nền: vòng hợp âm lo-fi nhẹ nhàng Fmaj7 - Em7 - Dm7 - Cmaj7 (84 BPM, khoảng 23 giây rồi lặp lại).
+    // Gồm pad êm, rải hợp âm, bass, giai điệu chuông và trống nhẹ - tất cả được tạo bằng code.
     function buildMusic(c) {
-      var rate = 22050;
-      var scale = [262, 294, 330, 392, 440, 523, 587];
-      var seq = [0, 2, 4, 2, 3, 1, 2, 0, 0, 2, 4, 5, 4, 3, 2, 1, 2, 4, 5, 4, 3, 2, 1, 0, 1, 3, 4, 3, 2, 1, 0, 0];
-      var noteLen = Math.floor(rate * 0.3);
-      var buf = c.createBuffer(1, noteLen * seq.length, rate);
-      var data = buf.getChannelData(0);
-      for (var k = 0; k < seq.length; k++) {
-        var f = scale[seq[k]];
-        var bass = scale[(Math.floor(k / 8) * 2) % 4] / 2;
-        for (var i = 0; i < noteLen; i++) {
-          var t = i / rate;
-          var env = Math.exp(-2.2 * i / noteLen) * Math.min(1, i / 200);
-          var v = Math.sin(2 * Math.PI * f * t) * 0.5 +
-            (k % 4 === 0 ? Math.sin(2 * Math.PI * bass * t) * 0.35 : 0);
-          data[k * noteLen + i] = v * env * 0.28;
+      var rate = 22050, bpm = 84, beat = 60 / bpm, bars = 8;
+      var N = Math.floor(bars * 4 * beat * rate);
+      var data = new Float32Array(N);
+      var chords = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]];
+      var melody = [[76, 74, 72, 0], [71, 72, 74, 0], [72, 69, 67, 0], [64, 67, 71, 72]];
+      var arp = [0, 1, 2, 3, 2, 1, 2, 3];
+      function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+      // ghi một nốt vào bộ đệm (vòng lặp liền mạch nhờ chỉ số % N)
+      function note(t0, dur, f, amp, o) {
+        var a = o.attack || 0.01, rel = o.release || 0.1, dec = o.decay || 0;
+        var n = Math.floor((dur + rel) * rate), s0 = Math.floor(t0 * rate), w = 2 * Math.PI * f / rate;
+        for (var i = 0; i < n; i++) {
+          var t = i / rate, env = t < a ? t / a : 1;
+          if (dec && t > a) env *= Math.exp(-dec * (t - a));
+          if (t > dur) env *= Math.max(0, 1 - (t - dur) / rel);
+          var ph = w * i, v = Math.sin(ph);
+          if (o.h2) v += o.h2 * Math.sin(2 * ph);
+          if (o.h3) v += o.h3 * Math.sin(3 * ph);
+          data[(s0 + i) % N] += v * env * amp;
         }
       }
+      function kick(t0) {
+        var n = Math.floor(0.2 * rate), s0 = Math.floor(t0 * rate), ph = 0;
+        for (var i = 0; i < n; i++) {
+          var t = i / rate, f = 48 + 70 * Math.exp(-t * 28);
+          ph += 2 * Math.PI * f / rate;
+          data[(s0 + i) % N] += Math.sin(ph) * Math.exp(-t * 16) * 0.2;
+        }
+      }
+      var seed = 7;
+      function noise() { seed = (seed * 16807) % 2147483647; return seed / 1073741823.5 - 1; }
+      function hat(t0, amp) {
+        var n = Math.floor(0.05 * rate), s0 = Math.floor(t0 * rate), prev = 0;
+        for (var i = 0; i < n; i++) {
+          var x = noise(), v = x - prev;
+          prev = x;
+          data[(s0 + i) % N] += v * Math.exp(-i / rate * 70) * amp;
+        }
+      }
+      for (var b = 0; b < bars; b++) {
+        var ch = chords[b % 4], t0 = b * 4 * beat;
+        ch.forEach(function (m) {
+          note(t0, 4 * beat, mf(m), 0.032, { attack: 0.5, release: 0.9, h2: 0.12 });
+          note(t0, 4 * beat, mf(m) * 1.004, 0.026, { attack: 0.7, release: 0.9 });
+        });
+        note(t0, 2 * beat * 0.95, mf(ch[0] - 12), 0.15, { attack: 0.02, decay: 1.1, release: 0.2, h2: 0.25 });
+        note(t0 + 2 * beat, 2 * beat * 0.95, mf((b % 2 ? ch[2] : ch[0]) - 12), 0.13,
+          { attack: 0.02, decay: 1.1, release: 0.2, h2: 0.25 });
+        for (var k = 0; k < 8; k++) {
+          note(t0 + k * beat / 2, beat / 2, mf(ch[arp[k]] + 12), 0.055, { attack: 0.005, decay: 5, release: 0.15, h2: 0.1 });
+        }
+        if (b >= 4) {
+          melody[b - 4].forEach(function (m, q) {
+            if (m) note(t0 + q * beat, beat * 0.9, mf(m), 0.06, { attack: 0.005, decay: 2.6, release: 0.35, h3: 0.08 });
+          });
+        }
+        kick(t0); kick(t0 + 2 * beat);
+        for (var q = 0; q < 4; q++) hat(t0 + q * beat + beat / 2, q % 2 ? 0.035 : 0.025);
+      }
+      var peak = 0;
+      for (var i = 0; i < N; i++) peak = Math.max(peak, Math.abs(data[i]));
+      var g = peak > 0 ? 0.5 / peak : 1;
+      for (i = 0; i < N; i++) data[i] *= g;
+      var buf = c.createBuffer(1, N, rate);
+      buf.getChannelData(0).set(data);
       return buf;
     }
 

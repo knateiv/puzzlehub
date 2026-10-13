@@ -208,7 +208,7 @@
 
     var el = h('div', { class: 'screen' }, [
       h('div', { class: 'topbar' }, [
-        h('button', { class: 'iconbtn', text: '←', onclick: function () { show(hubScreen()); } }),
+        h('button', { class: 'iconbtn', text: '←', onclick: function () { leaveGame(); } }),
         h('div', { class: 'title', text: info.emoji + ' ' + T(info.nameKey) }),
         coinChip
       ]),
@@ -220,9 +220,20 @@
       powerbar
     ]);
 
+    // Game chơi không giới hạn: bấm quay lại vẫn ghi điểm vào bảng xếp hạng
+    function leaveGame() {
+      if (frame.saveOnExit && !ended && score > 0) Store.submitScore(info.id, score);
+      show(hubScreen());
+    }
+
     var frame = {
       stage: stage,
       info: info,
+      saveOnExit: false,
+      /** Nút 🏁 Kết thúc: dừng ván, ghi điểm và hiện hộp thoại kết quả. */
+      finishButton: function () {
+        return button(T('finish'), '', function () { frame.endGame(score, 0); });
+      },
       onDestroy: function (fn) { cleanups.push(fn); },
       isEnded: function () { return ended; },
       setScore: function (s) {

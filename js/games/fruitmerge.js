@@ -1,232 +1,277 @@
-/* Fruit Merge - bản web: thả trái cây vào cột, trái giống nhau kề nhau gộp thành trái lớn hơn. */
+/* Fruit Merge - bản web, kiểu "Suika": kéo để chọn vị trí, thả tay để thả trái cây ở BẤT KỲ chỗ nào.
+   Trái cây rơi theo trọng lực, va chạm, lăn vào nhau; hai trái giống nhau chạm nhau sẽ gộp thành trái lớn hơn.
+   Vật lý dùng tích phân Verlet + tách chồng lấn (tọa độ thế giới: chiều rộng hộp = 1). */
 (function () {
   'use strict';
-  var PH = window.PH, h = PH.h, T = PH.T, rr = PH.rr, PAL = PH.PALETTE, Sound = PH.Sound, Haptics = PH.Haptics;
-  var COLS = 5, ROWS = 7, MAX_LEVEL = 9, COST_SWAP = 20, COST_HAMMER = 40;
+  var PH = window.PH, h = PH.h, T = PH.T, rr = PH.rr, Sound = PH.Sound, Haptics = PH.Haptics;
   var FRUITS = ['', '🍒', '🍓', '🍇', '🍊', '🍎', '🍐', '🍑', '🍍', '🍉'];
+  var RADIUS = [0, 0.052, 0.066, 0.082, 0.098, 0.116, 0.136, 0.158, 0.182, 0.21];
+  var COLORS = ['', '#FF8FAB', '#FFB3B3', '#C9B8F5', '#FFC48C', '#FF9E9E', '#C8E6A0', '#FFD0BC', '#FFE27A', '#8FE3C0'];
+  var MAX = 9, WORLD_H = 1.4, DANGER = 0.25, SPAWN_Y = 0.12, G = 2.6, DT = 1 / 120;
+  var COST_SWAP = 20, COST_HAMMER = 40, DROP_COOLDOWN = 450;
 
   PH.games.fruitmerge = {
     start: function (frame) {
-      var grid = [], animFrom = [], popAt = [], floats = [];
-      var score = 0, next = 1, afterNext = 1, busy = false, over = false, hammer = false, hover = -1, fallStart = 0;
-      var cell = 0, boardLeft = 0, boardTop = 0, headerH = 0, timers = [];
+      frame.saveOnExit = true;
+      var bodies = [], floats = [];
+      var score = 0, held = 1, next = 1, aimX = 0.5, lastDrop = -9999, over = false, hammer = false;
+      var acc = 0, lastT = 0, anyDanger = false;
+      var scale = 1, boxL = 0, boxT = 0, headerPx = 58;
       var hammerBtn;
 
       var hint = h('div', { class: 'subtle', text: T('fm_instruction') });
       var cv = frame.makeCanvas(null, function (o) {
-        cell = Math.min(o.w / COLS, o.h / (ROWS + 1.85));
-        headerH = cell * 1.6;
-        boardLeft = (o.w - cell * COLS) / 2;
-        boardTop = headerH + cell * 0.08;
+        scale = Math.max(50, Math.min(o.w - 8, (o.h - headerPx - 6) / WORLD_H));
+        boxL = (o.w - scale) / 2; boxT = headerPx;
       });
       frame.stage.insertBefore(hint, cv.canvas);
 
-      function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
-      frame.onDestroy(function () { timers.forEach(clearTimeout); });
-
       function randomFruit() {
         var r = PH.rnd(100);
-        return r < 35 ? 1 : r < 65 ? 2 : r < 85 ? 3 : 4;
+        return r < 30 ? 1 : r < 58 ? 2 : r < 80 ? 3 : r < 93 ? 4 : 5;
       }
-      function newGame() {
-        grid = []; animFrom = []; popAt = [];
-        for (var r = 0; r < ROWS; r++) {
-          grid.push([]); animFrom.push([]); popAt.push([]);
-          for (var c = 0; c < COLS; c++) { grid[r].push(0); animFrom[r].push(r); popAt[r].push(0); }
-        }
-        score = 0; busy = false; over = false; hammer = false;
-        next = randomFruit(); afterNext = randomFruit();
-        frame.setScore(0);
-      }
+      held = randomFruit(); next = randomFruit();
 
       frame.addPowerUp('🔀', 'fm_swap', COST_SWAP, function () {
-        if (over || busy) return;
+        if (over) return;
         if (!frame.trySpend(COST_SWAP)) return;
-        next = randomFruit(); Sound.play('pop');
+        held = randomFruit(); aimX = clampAim(aimX); Sound.play('pop');
       });
       hammerBtn = frame.addPowerUp('🔨', 'fm_hammer', COST_HAMMER, function () {
-        if (over || busy) return;
+        if (over) return;
         hammer = !hammer;
         frame.setPowerUpActive(hammerBtn, hammer);
         if (hammer) frame.toast('fm_hint_hammer');
       });
 
-      function resetAnim() {
-        for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) animFrom[r][c] = r;
+      function addBody(x, y, level, vx, vy) {
+        var b = {
+          x: x, y: y, px: x - (vx || 0), py: y - (vy || 0), r: RADIUS[level], level: level,
+          angle: 0, born: performance.now(), popAt: 0, overT: 0, dead: false
+        };
+        bodies.push(b);
+        return b;
       }
-      function drop(col) {
-        if (busy || over) return;
-        var row = -1;
-        for (var r = ROWS - 1; r >= 0; r--) if (!grid[r][col]) { row = r; break; }
-        if (row < 0) { Sound.play('error'); return; }
-        resetAnim();
-        grid[row][col] = next; animFrom[row][col] = -1; fallStart = performance.now();
-        next = afterNext; afterNext = randomFruit();
-        Sound.play('place'); Haptics.light();
-        busy = true;
-        later(function () { resolve(1); }, 280);
-      }
-
-      function flood(r, c, level, seen, out) {
-        if (r < 0 || r >= ROWS || c < 0 || c >= COLS || seen[r][c] || grid[r][c] !== level) return;
-        seen[r][c] = true; out.push([r, c]);
-        flood(r + 1, c, level, seen, out); flood(r - 1, c, level, seen, out);
-        flood(r, c + 1, level, seen, out); flood(r, c - 1, level, seen, out);
-      }
-
-      function gravity() {
-        fallStart = performance.now();
-        for (var c = 0; c < COLS; c++) {
-          var write = ROWS - 1, r;
-          for (r = ROWS - 1; r >= 0; r--) {
-            if (grid[r][c]) {
-              if (r !== write) { grid[write][c] = grid[r][c]; popAt[write][c] = popAt[r][c]; grid[r][c] = 0; }
-              animFrom[write][c] = r;
-              write--;
-            }
-          }
-          for (r = write; r >= 0; r--) animFrom[r][c] = r;
-        }
-      }
-
-      function mergeGroup(group, chain) {
-        var level = grid[group[0][0]][group[0][1]];
-        var target = group[0];
-        group.forEach(function (g) { if (g[0] > target[0]) target = g; });
-        group.forEach(function (g) { grid[g[0]][g[1]] = 0; });
-        var nl = level + 1, points;
-        if (nl > MAX_LEVEL) { points = 500 * chain; Sound.play('win'); }
-        else {
-          grid[target[0]][target[1]] = nl; popAt[target[0]][target[1]] = performance.now();
-          points = nl * 10 * (group.length - 1) * chain;
-          Sound.play(chain >= 2 ? 'combo' : 'clear');
-        }
-        Haptics.medium();
-        floats.push({
-          text: '+' + points + (chain >= 2 ? '  x' + chain : ''),
-          x: boardLeft + (target[1] + 0.5) * cell, y: boardTop + (target[0] + 0.3) * cell,
-          color: PAL[Math.min(7, nl - 1)], start: performance.now()
-        });
-        score += points; frame.setScore(score);
-      }
-
-      function resolve(chain) {
-        var seen = [];
-        for (var i = 0; i < ROWS; i++) { seen.push([]); for (var j = 0; j < COLS; j++) seen[i].push(false); }
-        for (var r = ROWS - 1; r >= 0; r--) {
-          for (var c = 0; c < COLS; c++) {
-            if (!grid[r][c] || seen[r][c]) continue;
-            var group = [];
-            flood(r, c, grid[r][c], seen, group);
-            if (group.length < 2) continue;
-            mergeGroup(group, chain);
-            gravity();
-            later(function () { resolve(chain + 1); }, 320);
-            return;
-          }
-        }
-        busy = false;
-        for (c = 0; c < COLS; c++) {
-          if (grid[0][c]) {
-            over = true; Sound.play('lose');
-            frame.endGame(score, Math.floor(score / 80));
-            return;
-          }
-        }
-      }
-
-      function useHammer(row, col) {
-        if (row < 0 || row >= ROWS || !grid[row][col]) { hammer = false; frame.setPowerUpActive(hammerBtn, false); return; }
-        if (!frame.trySpend(COST_HAMMER)) { hammer = false; frame.setPowerUpActive(hammerBtn, false); return; }
-        grid[row][col] = 0; hammer = false; frame.setPowerUpActive(hammerBtn, false);
-        Sound.play('clear'); Haptics.heavy();
-        resetAnim(); gravity(); busy = true;
-        later(function () { resolve(1); }, 320);
-      }
-
-      function pointerCol(e) {
+      function toWorld(e) {
         var p = cv.pos(e);
-        var col = Math.floor((p.x - boardLeft) / cell), row = Math.floor((p.y - boardTop) / cell);
-        return { col: col, row: row };
+        return { x: (p.x - boxL) / scale, y: (p.y - boxT) / scale };
       }
+      function clampAim(x) { var r = RADIUS[held]; return PH.clamp(x, r + 0.003, 1 - r - 0.003); }
+      function ready(now) { return now - lastDrop > DROP_COOLDOWN; }
+
+      function drop() {
+        var now = performance.now();
+        if (!ready(now)) return;
+        addBody(aimX, SPAWN_Y, held, 0, 0);
+        held = next; next = randomFruit();
+        aimX = clampAim(aimX);
+        lastDrop = now;
+        Sound.play('place'); Haptics.light();
+      }
+
+      function useHammer(w) {
+        var hit = null;
+        bodies.forEach(function (b) {
+          var dx = b.x - w.x, dy = b.y - w.y;
+          if (dx * dx + dy * dy <= b.r * b.r) hit = b;
+        });
+        hammer = false; frame.setPowerUpActive(hammerBtn, false);
+        if (!hit || !frame.trySpend(COST_HAMMER)) return;
+        bodies.splice(bodies.indexOf(hit), 1);
+        Sound.play('clear'); Haptics.heavy();
+      }
+
       cv.canvas.addEventListener('pointerdown', function (e) {
         Sound.unlock();
-        if (over || busy) return;
+        if (over) return;
         cv.canvas.setPointerCapture(e.pointerId);
-        var q = pointerCol(e);
-        hover = q.col >= 0 && q.col < COLS ? q.col : -1;
+        if (!hammer) aimX = clampAim(toWorld(e).x);
       });
       cv.canvas.addEventListener('pointermove', function (e) {
-        if (hover === -1 && !e.buttons) return;
-        var q = pointerCol(e);
-        hover = q.col >= 0 && q.col < COLS ? q.col : -1;
+        if (over || hammer) return;
+        aimX = clampAim(toWorld(e).x);
       });
       cv.canvas.addEventListener('pointerup', function (e) {
-        if (over || busy) { hover = -1; return; }
-        var q = pointerCol(e);
-        hover = -1;
-        if (q.col < 0 || q.col >= COLS) return;
-        if (hammer) useHammer(q.row, q.col); else drop(q.col);
+        if (over) return;
+        var w = toWorld(e);
+        if (hammer) { useHammer(w); return; }
+        aimX = clampAim(w.x);
+        drop();
       });
-      cv.canvas.addEventListener('pointercancel', function () { hover = -1; });
 
-      function drawFruit(ctx, level, cx, cy, radius, a) {
-        ctx.globalAlpha = a;
-        ctx.fillStyle = PAL[Math.min(7, level - 1)];
-        ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.31)';
-        ctx.beginPath(); ctx.arc(cx - radius * 0.25, cy - radius * 0.3, radius * 0.55, 0, Math.PI * 2); ctx.fill();
-        ctx.font = (radius * 1.15) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      // ------------------------------------------------------------ vật lý
+      function step() {
+        var i, j, a, b;
+        for (i = 0; i < bodies.length; i++) {
+          b = bodies[i];
+          var vx = (b.x - b.px) * 0.996, vy = (b.y - b.py) * 0.996;
+          var sp = Math.sqrt(vx * vx + vy * vy), vmax = 0.03;
+          if (sp > vmax) { vx *= vmax / sp; vy *= vmax / sp; }
+          b.px = b.x; b.py = b.y;
+          b.x += vx; b.y += vy + G * DT * DT;
+          b.angle += vx / b.r;                       // trái cây lăn tròn theo chiều ngang
+        }
+        for (var it = 0; it < 6; it++) {
+          for (i = 0; i < bodies.length; i++) {
+            a = bodies[i];
+            for (j = i + 1; j < bodies.length; j++) {
+              b = bodies[j];
+              var dx = b.x - a.x, dy = b.y - a.y, rs = a.r + b.r, d2 = dx * dx + dy * dy;
+              if (d2 >= rs * rs || d2 < 1e-12) continue;
+              var d = Math.sqrt(d2), ov = rs - d, nx = dx / d, ny = dy / d;
+              var ma = a.r * a.r, mb = b.r * b.r, tot = ma + mb;
+              a.x -= nx * ov * (mb / tot); a.y -= ny * ov * (mb / tot);
+              b.x += nx * ov * (ma / tot); b.y += ny * ov * (ma / tot);
+            }
+          }
+          for (i = 0; i < bodies.length; i++) {
+            b = bodies[i];
+            if (b.x < b.r) { b.x = b.r; b.px = b.x + (b.x - b.px) * 0.3; }
+            if (b.x > 1 - b.r) { b.x = 1 - b.r; b.px = b.x + (b.x - b.px) * 0.3; }
+            if (b.y > WORLD_H - b.r) {
+              b.y = WORLD_H - b.r;
+              b.px = b.x - (b.x - b.px) * 0.985;     // ma sát với đáy hộp
+            }
+          }
+        }
+        mergeCheck();
+      }
+
+      function mergeCheck() {
+        var now = performance.now();
+        for (var i = 0; i < bodies.length; i++) {
+          var a = bodies[i];
+          if (a.dead) continue;
+          for (var j = i + 1; j < bodies.length; j++) {
+            var b = bodies[j];
+            if (b.dead || b.level !== a.level) continue;
+            var dx = b.x - a.x, dy = b.y - a.y, rs = a.r + b.r + 0.003;
+            if (dx * dx + dy * dy > rs * rs) continue;
+            a.dead = b.dead = true;
+            var lvl = a.level + 1, mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+            var vx = ((a.x - a.px) + (b.x - b.px)) / 2, vy = ((a.y - a.py) + (b.y - b.py)) / 2;
+            var pts;
+            if (lvl > MAX) {
+              pts = 500;                              // hai quả dưa hấu gộp nhau: biến mất, thưởng lớn
+              Sound.play('win');
+            } else {
+              var nb = addBody(PH.clamp(mx, RADIUS[lvl], 1 - RADIUS[lvl]), my, lvl, vx, vy);
+              nb.popAt = now;
+              pts = lvl * (lvl + 1) / 2 * 10;
+              Sound.play(lvl >= 6 ? 'combo' : 'clear');
+            }
+            Haptics.medium();
+            score += pts;
+            frame.setScore(score);
+            floats.push({ text: '+' + pts, x: mx, y: my, start: now, color: COLORS[Math.min(MAX, lvl)] });
+            break;
+          }
+        }
+        bodies = bodies.filter(function (q) { return !q.dead; });
+      }
+
+      function checkDanger(now, dt) {
+        anyDanger = false;
+        for (var i = 0; i < bodies.length; i++) {
+          var b = bodies[i];
+          if (now - b.born < 1500) { b.overT = 0; continue; }
+          if (b.y - b.r < DANGER) {
+            b.overT += dt; anyDanger = true;
+            if (b.overT > 2.2) { gameOver(); return; }
+          } else b.overT = 0;
+        }
+      }
+
+      function gameOver() {
+        if (over) return;
+        over = true;
+        frame.endGame(score, Math.floor(score / 80));
+      }
+
+      // ------------------------------------------------------------ vẽ
+      function drawFruit(ctx, x, y, r, level, angle, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.fillStyle = COLORS[level];
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.35, r * 0.45, 0, Math.PI * 2); ctx.fill();
+        ctx.rotate(angle);
+        ctx.font = (r * 1.3) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#000';
-        ctx.fillText(FRUITS[level], cx, cy + radius * 0.06);
-        ctx.globalAlpha = 1;
+        ctx.fillText(FRUITS[level], 0, r * 0.08);
+        ctx.restore();
       }
 
       frame.loop(function (now) {
+        if (!lastT) lastT = now;
+        var dtF = Math.min(0.05, (now - lastT) / 1000);
+        lastT = now;
+        if (!over && !document.hidden) {
+          acc += dtF;
+          var guard = 0;
+          while (acc >= DT && guard++ < 8) { step(); acc -= DT; }
+          if (guard >= 8) acc = 0;
+          checkDanger(now, dtF);
+        }
+
         var ctx = cv.ctx, th = PH.theme();
         ctx.clearRect(0, 0, cv.w, cv.h);
-        if (!cell) return;
-        var gap = cell * 0.05, r, c;
+        var boxH = WORLD_H * scale;
 
-        ctx.fillStyle = th.text2; ctx.font = '700 12px -apple-system, Arial, sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-        ctx.fillText(T('fm_next'), boardLeft + cell * 0.9, headerH * 0.28);
-        drawFruit(ctx, next, boardLeft + cell * 0.9, headerH * 0.68, cell * 0.38, 1);
-        drawFruit(ctx, afterNext, boardLeft + cell * 1.85, headerH * 0.72, cell * 0.24, 0.7);
-        if (hover >= 0 && !hammer) drawFruit(ctx, next, boardLeft + (hover + 0.5) * cell, headerH * 0.62, cell * 0.4, 1);
+        // "Tiếp theo" ở góc phải phía trên
+        ctx.fillStyle = th.text2;
+        ctx.font = '700 12px -apple-system, Arial, sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText(T('fm_next'), boxL + scale - 48, 28);
+        drawFruit(ctx, boxL + scale - 22, 28, Math.min(20, RADIUS[next] * scale), next, 0, 1);
 
+        // hộp đựng
         ctx.fillStyle = th.board;
-        rr(ctx, boardLeft - gap * 2, boardTop - gap * 2, cell * COLS + gap * 4, cell * ROWS + gap * 4, cell * 0.25); ctx.fill();
-        for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
-          ctx.fillStyle = c === hover ? PH.alpha(PAL[0], 0.28) : th.empty;
-          rr(ctx, boardLeft + c * cell + gap, boardTop + r * cell + gap, cell - 2 * gap, cell - 2 * gap, cell * 0.2); ctx.fill();
-        }
-        ctx.fillStyle = 'rgba(240,112,122,0.28)';
-        ctx.fillRect(boardLeft, boardTop, cell * COLS, cell * 0.08);
+        rr(ctx, boxL, boxT, scale, boxH, 18); ctx.fill();
 
-        var fk = Math.min(1, (now - fallStart) / 260), ease = 1 - (1 - fk) * (1 - fk);
-        for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
-          var lv = grid[r][c];
-          if (!lv) continue;
-          var rowPos = animFrom[r][c] + (r - animFrom[r][c]) * ease;
-          var pop = 1, age = now - popAt[r][c];
-          if (age >= 0 && age < 300) pop = 1 + 0.28 * Math.sin(Math.PI * age / 300);
-          drawFruit(ctx, lv, boardLeft + (c + 0.5) * cell, boardTop + (rowPos + 0.5) * cell, cell * 0.43 * pop, 1);
+        // vạch nguy hiểm
+        var dy = boxT + DANGER * scale;
+        ctx.save();
+        ctx.setLineDash([8, 6]);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = anyDanger && Math.floor(now / 250) % 2 ? 'rgba(240,80,90,0.95)' : 'rgba(240,112,122,0.45)';
+        ctx.beginPath(); ctx.moveTo(boxL + 6, dy); ctx.lineTo(boxL + scale - 6, dy); ctx.stroke();
+        ctx.restore();
+
+        // đường ngắm và trái cây đang cầm
+        if (!over && !hammer) {
+          var ax = boxL + aimX * scale, ok = ready(now);
+          ctx.save();
+          ctx.setLineDash([4, 6]);
+          ctx.strokeStyle = PH.alpha('#FFFFFF', 0.7);
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(ax, boxT + SPAWN_Y * scale); ctx.lineTo(ax, boxT + boxH - 4); ctx.stroke();
+          ctx.restore();
+          drawFruit(ctx, ax, boxT + SPAWN_Y * scale, RADIUS[held] * scale, held, 0, ok ? 1 : 0.45);
         }
 
+        // trái cây
+        bodies.forEach(function (b) {
+          var pop = 1, age = now - b.popAt;
+          if (b.popAt && age < 260) pop = 1 + 0.22 * Math.sin(Math.PI * age / 260);
+          drawFruit(ctx, boxL + b.x * scale, boxT + b.y * scale, b.r * scale * pop, b.level, b.angle, 1);
+        });
+
+        // chữ điểm bay lên
         floats = floats.filter(function (f) { return now - f.start < 900; });
         floats.forEach(function (f) {
           var t = (now - f.start) / 900;
-          ctx.font = '800 20px -apple-system, Arial, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-          ctx.shadowColor = 'rgba(61,58,92,' + 0.6 * (1 - t) + ')'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
-          ctx.fillStyle = PH.alpha(f.color, 1 - t * t);
-          ctx.fillText(f.text, f.x, f.y - cell * 0.9 * t);
-          ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+          ctx.font = '800 20px -apple-system, Arial, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = PH.alpha('#F2668B', 1 - t * t);
+          ctx.fillText(f.text, boxL + f.x * scale, boxT + f.y * scale - 30 * t);
         });
       });
 
-      newGame();
+      PH.debugFruit = function () { return bodies; };     // để kiểm thử
     }
   };
 })();

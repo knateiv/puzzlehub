@@ -1,5 +1,7 @@
-/* Service worker: lưu toàn bộ file vào bộ nhớ đệm để chơi offline sau lần mở đầu tiên. */
-var CACHE = 'puzzlehub-v1';
+/* Service worker: lưu toàn bộ file để chơi offline.
+   Chiến lược "mạng trước": có mạng thì luôn lấy bản mới nhất (và cập nhật bộ nhớ đệm),
+   mất mạng thì dùng bản đã lưu. */
+var CACHE = 'puzzlehub-v2';
 var FILES = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/core.js', './js/ui.js', './js/main.js',
@@ -20,11 +22,15 @@ self.addEventListener('activate', function (e) {
 
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
-  e.respondWith(caches.match(e.request).then(function (hit) {
-    return hit || fetch(e.request).then(function (res) {
+  e.respondWith(fetch(e.request).then(function (res) {
+    if (res && res.ok) {
       var copy = res.clone();
       caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
-      return res;
-    }).catch(function () { return caches.match('./index.html'); });
+    }
+    return res;
+  }).catch(function () {
+    return caches.match(e.request, { ignoreSearch: true }).then(function (hit) {
+      return hit || caches.match('./index.html');
+    });
   }));
 });

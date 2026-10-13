@@ -144,3 +144,8 @@ html, body {
 .screen > div > .btn.danger { width: 100%; }
 .btnrow.gone { display: none; }
 
+
+/* hàng 3 nút (Hoàn tác / Làm lại / Kết thúc) */
+.btnrow.three { gap: 8px; }
+.btnrow.three .btn { font-size: 14px; padding: 0 6px; }
+

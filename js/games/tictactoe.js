@@ -1,8 +1,8 @@
-/* Tic Tac Toe - bản web: đấu máy 5 ván, Minimax. */
+/* Tic Tac Toe - bản web: đấu máy KHÔNG GIỚI HẠN số ván (Minimax). Bấm 🏁 Kết thúc để ghi điểm. */
 (function () {
   'use strict';
   var PH = window.PH, h = PH.h, T = PH.T, rr = PH.rr, PAL = PH.PALETTE, Sound = PH.Sound, Haptics = PH.Haptics;
-  var ROUNDS = 5, COST_HINT = 20;
+  var COST_HINT = 20;
   var LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
   var PLAYER = 1, AI = 2;
 
@@ -48,10 +48,12 @@
 
   PH.games.tictactoe = {
     start: function (frame) {
+      frame.saveOnExit = true;
       var cells = [0, 0, 0, 0, 0, 0, 0, 0, 0], placedAt = [0, 0, 0, 0, 0, 0, 0, 0, 0];
       var win = null, hintCell = -1, inputOn = false;
       var hard = false, round = 1, points = 0, playerTurn = false, roundOver = false;
       var timers = [];
+      var cell = 0, left = 0, top = 0;
 
       var roundInfo = h('div', { class: 'subtle', style: 'font-weight:700;font-size:15px' });
       var status = h('div', { class: 'hl' });
@@ -59,11 +61,11 @@
         var size = Math.min(o.w, o.h) - 8;
         cell = size / 3; left = (o.w - size) / 2; top = (o.h - size) / 2;
       });
-      var cell = 0, left = 0, top = 0;
-      var nextBtn = PH.UI.button('', 'primary hidden', onNext);
+      var nextBtn = PH.UI.button(T('ttt_next'), 'primary gone', onNext);
+      var row = h('div', { class: 'btnrow' }, [nextBtn, frame.finishButton()]);
       frame.stage.insertBefore(roundInfo, cv.canvas);
       frame.stage.insertBefore(status, cv.canvas);
-      frame.stage.appendChild(nextBtn);
+      frame.stage.appendChild(row);
 
       frame.addPowerUp('💡', 'ttt_hint', COST_HINT, function () {
         if (!playerTurn || roundOver) return;
@@ -86,8 +88,8 @@
 
       function startRound() {
         cells = [0, 0, 0, 0, 0, 0, 0, 0, 0]; win = null; hintCell = -1; roundOver = false;
-        nextBtn.classList.add('hidden');
-        roundInfo.textContent = T('ttt_round', round, ROUNDS);
+        nextBtn.classList.add('gone');
+        roundInfo.textContent = T('ttt_round', round);
         playerTurn = round % 2 === 1;          // ván lẻ người đi trước, ván chẵn máy đi trước
         if (playerTurn) { status.textContent = T('ttt_your_turn'); inputOn = true; }
         else aiMove();
@@ -128,15 +130,11 @@
           points += 1; status.textContent = T('ttt_draw'); frame.addCoins(2 * mult); Sound.play('clear');
         }
         frame.setScore(points * mult);
-        nextBtn.textContent = round >= ROUNDS ? T('ttt_finish') : T('ttt_next');
-        nextBtn.classList.remove('hidden');
+        nextBtn.classList.remove('gone');
         return true;
       }
 
-      function onNext() {
-        if (round >= ROUNDS) frame.endGame(points * (hard ? 2 : 1), 0);
-        else { round++; startRound(); }
-      }
+      function onNext() { round++; startRound(); }
 
       cv.canvas.addEventListener('pointerdown', function (e) {
         Sound.unlock();
