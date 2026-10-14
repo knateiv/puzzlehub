@@ -9,7 +9,11 @@
     { id: 'oneline', nameKey: 'game_oneline', descKey: 'desc_oneline', emoji: '✏️', color: '#8FE3C0' },
     { id: 'watersort', nameKey: 'game_watersort', descKey: 'desc_watersort', emoji: '🧪', color: '#6FDCE3' },
     { id: 'fruitmerge', nameKey: 'game_fruitmerge', descKey: 'desc_fruitmerge', emoji: '🍉', color: '#FFC48C' },
-    { id: 'whack', nameKey: 'game_whack', descKey: 'desc_whack', emoji: '🔨', color: '#B7A6F2' }
+    { id: 'whack', nameKey: 'game_whack', descKey: 'desc_whack', emoji: '🔨', color: '#B7A6F2' },
+    { id: 'sudoku', nameKey: 'game_sudoku', descKey: 'desc_sudoku', emoji: '🔢', color: '#4DABF7' },
+    { id: 'onet', nameKey: 'game_onet', descKey: 'desc_onet', emoji: '🔗', color: '#69DB7C' },
+    { id: 'mahjong', nameKey: 'game_mahjong', descKey: 'desc_mahjong', emoji: '🀄', color: '#FF6B6B' },
+    { id: 'blockslide', nameKey: 'game_blockslide', descKey: 'desc_blockslide', emoji: '🚗', color: '#FFA94D' }
   ];
 
   var app = document.getElementById('app');

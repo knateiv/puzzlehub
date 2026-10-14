@@ -157,7 +157,21 @@
       fm_next: 'Tiếp theo', fm_instruction: 'Kéo để chọn chỗ, thả tay để thả trái cây. Hai trái giống nhau chạm nhau sẽ gộp lại!',
       fm_swap: 'Đổi trái', fm_hammer: 'Búa', fm_hint_hammer: 'Chạm vào một trái cây để đập',
       wm_start: 'Bắt đầu', wm_instruction: 'Đập chuột! Chuột vàng +3 điểm. Để chuột chạy mất hoặc đập bom sẽ mất 1 mạng.',
-      wm_plus_life: '+1 mạng', finish: '🏁 Kết thúc'
+      wm_plus_life: '+1 mạng', finish: '🏁 Kết thúc',
+      game_sudoku: 'Sudoku', desc_sudoku: 'Điền số vào ô trống sao cho đúng luật',
+      game_onet: 'Onet', desc_onet: 'Nối cặp hình giống nhau không quá 2 lần rẽ',
+      game_mahjong: 'Mahjong', desc_mahjong: 'Ghép cặp quân bài tự do để xóa toàn bộ bàn',
+      game_blockslide: 'Block Slide', desc_blockslide: 'Trượt các khối để đưa khối đỏ ra ngoài',
+      sk_easy: 'Dễ', sk_medium: 'Vừa', sk_hard: 'Khó', sk_choose: 'Chọn độ khó',
+      sk_hint: 'Gợi ý', sk_check: 'Kiểm tra', sk_congrats: 'Hoàn thành! Tuyệt vời!',
+      sk_errors: 'Có {0} lỗi', sk_no_errors: 'Không có lỗi!', sk_hint_used: 'Đã gợi ý ô',
+      on_time: 'Thời gian: {0}s', on_pairs: 'Cặp còn lại: {0}',
+      on_hint: 'Gợi ý', on_timeup: '+30 giây',
+      on_solved: 'Hoàn thành!', on_level: 'Màn {0}',
+      mj_pairs: 'Cặp còn: {0}', mj_hint: 'Gợi ý', mj_undo: 'Hoàn tác',
+      mj_solved: 'Chúc mừng! Dọn sạch bàn!', mj_no_moves: 'Hết nước đi!',
+      bs_moves: 'Bước: {0}', bs_level: 'Màn {0}', bs_hint: 'Gợi ý', bs_undo: 'Hoàn tác',
+      bs_solved: 'Hoàn thành màn!', bs_next: 'Màn tiếp'
     },
     en: {
       app_name: 'Puzzle Hub', hub_subtitle: 'Your offline puzzle paradise',
@@ -195,7 +209,21 @@
       fm_next: 'Next', fm_instruction: 'Drag to aim, release to drop. Matching fruits that touch merge!',
       fm_swap: 'Swap', fm_hammer: 'Hammer', fm_hint_hammer: 'Tap a fruit to smash it',
       wm_start: 'Start', wm_instruction: 'Whack the moles! Golden +3. Letting a mole escape or hitting a bomb costs 1 life.',
-      wm_plus_life: '+1 life', finish: '🏁 Finish'
+      wm_plus_life: '+1 life', finish: '🏁 Finish',
+      game_sudoku: 'Sudoku', desc_sudoku: 'Fill the grid so every row, column and box has 1–9',
+      game_onet: 'Onet', desc_onet: 'Connect matching pairs with a path of at most 2 turns',
+      game_mahjong: 'Mahjong', desc_mahjong: 'Remove all free matching tile pairs from the board',
+      game_blockslide: 'Block Slide', desc_blockslide: 'Slide blocks to move the red block to the exit',
+      sk_easy: 'Easy', sk_medium: 'Medium', sk_hard: 'Hard', sk_choose: 'Choose difficulty',
+      sk_hint: 'Hint', sk_check: 'Check', sk_congrats: 'Puzzle complete! Great job!',
+      sk_errors: '{0} error(s) found', sk_no_errors: 'No errors!', sk_hint_used: 'Cell revealed',
+      on_time: 'Time: {0}s', on_pairs: 'Pairs left: {0}',
+      on_hint: 'Hint', on_timeup: '+30 seconds',
+      on_solved: 'Level complete!', on_level: 'Level {0}',
+      mj_pairs: 'Pairs left: {0}', mj_hint: 'Hint', mj_undo: 'Undo',
+      mj_solved: 'Congratulations! Board cleared!', mj_no_moves: 'No more moves!',
+      bs_moves: 'Moves: {0}', bs_level: 'Level {0}', bs_hint: 'Hint', bs_undo: 'Undo',
+      bs_solved: 'Level complete!', bs_next: 'Next level'
     }
   };
 
