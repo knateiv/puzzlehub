@@ -1,12 +1,13 @@
 /* Service worker: lưu toàn bộ file để chơi offline.
    Chiến lược "mạng trước": có mạng thì luôn lấy bản mới nhất (và cập nhật bộ nhớ đệm),
    mất mạng thì dùng bản đã lưu. */
-var CACHE = 'puzzlehub-v2';
+var CACHE = 'puzzlehub-v3';
 var FILES = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './js/core.js', './js/ui.js', './js/main.js',
   './js/games/blockblast.js', './js/games/tictactoe.js', './js/games/oneline.js',
   './js/games/watersort.js', './js/games/fruitmerge.js', './js/games/whack.js',
+  './js/games/sudoku.js', './js/games/onet.js', './js/games/mahjong.js', './js/games/blockslide.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'
 ];
 
