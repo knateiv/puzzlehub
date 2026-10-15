@@ -77,13 +77,7 @@
 
   function hubScreen() {
     var main = catalog[0];
-    var decorMap = ['.XX..', '.XX.X', 'X..XX', 'XX.XX', 'XX...'];
-    var decor = h('div', { class: 'decor' });
-    decorMap.forEach(function (row, r) {
-      for (var c = 0; c < 5; c++) {
-        decor.appendChild(h('i', { class: row[c] === 'X' ? ((r + c) % 2 === 0 ? 'on1' : 'on2') : '' }));
-      }
-    });
+    var heroBadge = h('img', { src: 'icons/icon-192.png', class: 'hero-badge', alt: 'Puzzle Hub' });
 
     var hero = h('div', { class: 'hero press', onclick: function () { openGame(main); } }, [
       h('div', { class: 'hero-row' }, [
@@ -92,7 +86,7 @@
           h('p', { text: T(main.descKey) }),
           h('div', { class: 'bestline', text: bestText(main.id) })
         ]),
-        decor
+        heroBadge
       ]),
       h('div', { class: 'play', text: T('hub_play_now') })
     ]);
