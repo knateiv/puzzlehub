@@ -1,9 +1,10 @@
 /* Service worker: lưu toàn bộ file để chơi offline.
    Chiến lược "mạng trước": có mạng thì luôn lấy bản mới nhất (và cập nhật bộ nhớ đệm),
    mất mạng thì dùng bản đã lưu. */
-var CACHE = 'puzzlehub-v8';
+var CACHE = 'puzzlehub-v9';
 var FILES = [
   './', './index.html', './style.css', './manifest.webmanifest',
+  './assets/splash.jpg',
   './js/core.js', './js/ui.js', './js/main.js',
   './js/games/blockblast.js', './js/games/tictactoe.js', './js/games/oneline.js',
   './js/games/watersort.js', './js/games/fruitmerge.js', './js/games/whack.js',

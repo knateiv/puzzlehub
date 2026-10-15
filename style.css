@@ -85,15 +85,85 @@ html, body {
 .hub-head h1 { margin: 0; font-size: 28px; font-weight: 800; }
 .hub-head .s { font-size: 13px; color: var(--text2); }
 .section { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: .12em; padding: 22px 4px 0; }
+/* Màn hình Splash khởi động nghệ thuật chuẩn thương mại */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background-color: #FFF7F0;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  overflow: hidden;
+  transition: opacity 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+#splash.fade-out {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.5s;
+}
+.splash-bg {
+  position: absolute; inset: 0;
+  background-image: url('assets/splash.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+.splash-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 65%, rgba(18, 12, 38, 0.65) 88%, rgba(18, 12, 38, 0.88) 100%);
+}
+.splash-content {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 380px;
+  padding: 0 28px calc(26px + var(--safe-bottom));
+  display: flex; flex-direction: column; align-items: center;
+}
+.splash-bar {
+  width: 100%; height: 7px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 99px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.splash-progress {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #FF6B8B, #FFD166, #4DABF7);
+  border-radius: 99px;
+  box-shadow: 0 0 12px rgba(255, 214, 102, 0.8);
+  transition: width 1.3s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+.splash-hint {
+  margin-top: 12px;
+  font-size: 13px; font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  animation: splashPulse 1.6s ease-in-out infinite;
+}
+@keyframes splashPulse {
+  0%, 100% { opacity: 0.75; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
+}
+
 .hero {
   margin-top: 10px; border-radius: 30px; padding: 18px 20px 20px; color: #fff;
   background: linear-gradient(135deg, #FF8FAB, #FFB38A); cursor: pointer;
 }
-.hero-row { display: flex; align-items: center; gap: 10px; }
+.hero-row { display: flex; align-items: center; gap: 14px; }
 .hero h2 { margin: 0; font-size: 30px; font-weight: 800; }
 .hero p { margin: 4px 0 8px; font-size: 14px; opacity: .92; }
 .hero .bestline { font-size: 14px; font-weight: 700; }
 .hero .play { margin-top: 16px; background: #fff; color: #F2668B; border-radius: 26px; height: 52px; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+.hero-badge {
+  width: 92px; height: 92px; flex: 0 0 92px;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+}
 .decor { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; width: 96px; height: 96px; flex: 0 0 96px; }
 .decor i { border-radius: 5px; background: rgba(255, 255, 255, .22); }
 .decor i.on1 { background: #fff; } .decor i.on2 { background: rgba(255, 255, 255, .8); }
