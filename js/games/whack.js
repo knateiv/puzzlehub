@@ -156,7 +156,7 @@
             ctx.beginPath(); ctx.rect(cx - cell / 2, cy - cell, cell, cell); ctx.clip();
             if (type[i2] === GOLD) {
               ctx.fillStyle = PH.alpha('#FFC94D', 0.55);
-              ctx.beginPath(); ctx.arc(cx, my - cell * 0.18, cell * 0.36, 0, Math.PI * 2); ctx.fill();
+              ctx.beginPath(); ctx.arc(cx, my - cell * 0.18, Math.max(0, cell * 0.36), 0, Math.PI * 2); ctx.fill();
             }
             ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#000';
             ctx.fillText(type[i2] === BOMB ? '💣' : (type[i2] === GOLD ? '🐹' : '🐭'), cx, my);

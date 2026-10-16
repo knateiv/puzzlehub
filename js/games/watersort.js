@@ -415,11 +415,11 @@
             ctx.stroke();
 
             // Vòng sóng mặt nước nơi dòng nước chạm vào
-            var ripW = (tubeW * 0.35) * (0.75 + 0.25 * Math.sin(now * 0.03));
+            var ripW = Math.max(0, (tubeW * 0.35) * (0.75 + 0.25 * Math.sin(now * 0.03)));
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.ellipse(bMouthX, bLiquidTop, ripW, ripW * 0.3, 0, 0, Math.PI * 2);
+            ctx.ellipse(bMouthX, bLiquidTop, ripW, Math.max(0, ripW * 0.3), 0, 0, Math.PI * 2);
             ctx.stroke();
 
             // Giọt nước li ti bắn lên
@@ -428,10 +428,10 @@
               var splashOffset = (pi === 0 ? -1 : pi === 1 ? 1 : 0) * seed * (tubeW * 0.25);
               var splashX = bMouthX + splashOffset;
               var splashY = bLiquidTop - seed * (tubeH * 0.1) * (1 - seed * 0.5);
-              var splashR = Math.max(1, 2.5 * (1 - seed));
+              var splashR = Math.max(0.5, 2.5 * (1 - seed));
               ctx.fillStyle = WATER[pouring.color - 1];
               ctx.beginPath();
-              ctx.arc(splashX, splashY, splashR, 0, Math.PI * 2);
+              ctx.arc(splashX, splashY, Math.max(0, splashR), 0, Math.PI * 2);
               ctx.fill();
             }
             ctx.restore();

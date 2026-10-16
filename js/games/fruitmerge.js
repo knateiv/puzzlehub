@@ -194,9 +194,9 @@
         ctx.globalAlpha = alpha;
         ctx.translate(x, y);
         ctx.fillStyle = COLORS[level];
-        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, Math.max(0, r), 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.35, r * 0.45, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.35, Math.max(0, r * 0.45), 0, Math.PI * 2); ctx.fill();
         ctx.rotate(angle);
         ctx.font = (r * 1.3) + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

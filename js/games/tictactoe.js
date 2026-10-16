@@ -172,7 +172,7 @@
             ctx.moveTo(cx + half, cy - half); ctx.lineTo(cx - half, cy + half); ctx.stroke();
           } else {
             ctx.strokeStyle = PAL[1];
-            ctx.beginPath(); ctx.arc(cx, cy, half * 1.1, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, Math.max(0, half * 1.1), 0, Math.PI * 2); ctx.stroke();
           }
         }
       });

@@ -1414,8 +1414,8 @@
         // Hiệu ứng vòng sóng hào quang quanh kim cương khi điểm tăng
         scoreRings = scoreRings.filter(function (sr) { return now - sr.start < sr.dur; });
         scoreRings.forEach(function (sr) {
-          var srp = (now - sr.start) / sr.dur;
-          var curR = sr.maxR * Math.sqrt(srp);
+          var srp = Math.max(0, Math.min(1, (now - sr.start) / sr.dur));
+          var curR = Math.max(0, sr.maxR * Math.sqrt(srp));
           ctx.save();
           ctx.beginPath();
           ctx.arc(sr.x, sr.y, curR, 0, Math.PI * 2);
@@ -1484,52 +1484,7 @@
         ctx.fillText(scoreStr, scoreCenterX, scoreCenterY);
         ctx.restore();
 
-        // 6. THANH COMBO GIỮA TRUNG TÂM (Active Combo Pill Meter)
-        if (streak > 0) {
-          ctx.save();
-          ctx.translate(scoreCenterX, comboBadgeY);
-          var meterScale = 1 + 0.04 * Math.sin(now * 0.008);
-          ctx.scale(meterScale, meterScale);
-
-          var badgeW = Math.max(130, cell * 3.4), badgeH = Math.max(24, cell * 0.58);
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
-          ctx.strokeStyle = streak >= 3 ? '#FF6B35' : 'rgba(255, 255, 255, 0.4)';
-          ctx.lineWidth = 1.5;
-          ctx.shadowColor = streak >= 3 ? '#FF6B35' : 'transparent';
-          ctx.shadowBlur = 8;
-          rr(ctx, -badgeW / 2, -badgeH / 2, badgeW, badgeH, badgeH / 2);
-          ctx.fill(); ctx.stroke();
-
-          // Chữ COMBO xN
-          ctx.shadowBlur = 0;
-          ctx.font = '800 ' + Math.round(badgeH * 0.58) + 'px -apple-system, Arial, sans-serif';
-          ctx.fillStyle = streak >= 3 ? '#FF9E66' : '#FFFFFF';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🔥 COMBO ' + streak, -badgeW / 2 + 10, 0);
-
-          // 3 đốm lửa biểu thị số lượt còn lại để duy trì chuỗi (STREAK_WINDOW)
-          var leftMoves = STREAK_WINDOW - sinceClear;
-          var pipStartX = badgeW / 2 - 40;
-          for (var pi = 0; pi < STREAK_WINDOW; pi++) {
-            var px = pipStartX + pi * 12;
-            ctx.beginPath();
-            ctx.arc(px, 0, 4, 0, Math.PI * 2);
-            if (pi < leftMoves) {
-              ctx.fillStyle = '#FFD54F';
-              ctx.shadowColor = '#FF8F00';
-              ctx.shadowBlur = 6;
-              ctx.fill();
-            } else {
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-              ctx.shadowBlur = 0;
-              ctx.fill();
-            }
-          }
-          ctx.restore();
-        }
-
-        // 7. LINH VẬT MASCOT ĐỨNG HẲN GÓC TRÊN BÊN PHẢI BÀN CỜ
+        // 6. LINH VẬT MASCOT ĐỨNG HẲN GÓC TRÊN BÊN PHẢI BÀN CỜ
         var isCheering = now < cheerUntil;
         var mascotSize = Math.max(38, Math.min(54, cell * 1.12));
         var mascotW = mascotSize * 0.95;
@@ -1650,9 +1605,9 @@
         // Cross flares tại điểm giao hàng/cột
         crossFlares = crossFlares.filter(function (cf) { return now - cf.start < cf.dur; });
         crossFlares.forEach(function (cf) {
-          var cp = (now - cf.start) / cf.dur;
+          var cp = Math.max(0, Math.min(1, (now - cf.start) / cf.dur));
           var cfAlpha = 1 - cp;
-          var fR = cell * (1.2 + cp * 1.5);
+          var fR = Math.max(0, cell * (1.2 + cp * 1.5));
           ctx.save();
           ctx.translate(cf.x, cf.y);
           ctx.rotate(cp * 1.2);
@@ -1663,15 +1618,15 @@
           ctx.moveTo(0, -fR); ctx.lineTo(0, fR);
           ctx.stroke();
           ctx.fillStyle = PH.alpha(cf.color, cfAlpha * 0.8);
-          ctx.beginPath(); ctx.arc(0, 0, cell * 0.45 * (1 - cp), 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(0, 0, Math.max(0, cell * 0.45 * (1 - cp)), 0, Math.PI * 2); ctx.fill();
           ctx.restore();
         });
 
         // Expanding Shockwave rings
         shockwaves = shockwaves.filter(function (sw) { return now - sw.start < sw.dur; });
         shockwaves.forEach(function (sw) {
-          var sp = (now - sw.start) / sw.dur;
-          var curR = sw.maxR * Math.sqrt(sp);
+          var sp = Math.max(0, Math.min(1, (now - sw.start) / sw.dur));
+          var curR = Math.max(0, sw.maxR * Math.sqrt(sp));
           ctx.save();
           ctx.beginPath();
           ctx.arc(sw.x, sw.y, curR, 0, Math.PI * 2);
