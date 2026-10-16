@@ -92,7 +92,22 @@
 
     // Cấp độ 8..11: Trung cấp (12 - 15 cạnh)
     8: flowerHub(4, 38, 22),
-    9: triangulatedRings(3, 38, 19),
+    9: {
+      nodes: [
+        [50.0, 12.0],
+        [82.9, 69.0],
+        [17.1, 69.0],
+        [66.5, 40.5],
+        [50.0, 69.0],
+        [33.5, 40.5]
+      ],
+      edges: [
+        [0, 3], [3, 1],
+        [1, 4], [4, 2],
+        [2, 5], [5, 0],
+        [3, 4], [4, 5], [5, 3]
+      ]
+    },
     10: starPolygon(7, 2, 38),
     11: flowerHub(5, 38, 18),
 
@@ -190,6 +205,7 @@
         resetPath();
         levelStart = performance.now();
       }
+      PH.games.oneline._setLevel = function (n) { levelNo = n; loadLevel(); };
       function resetPath() {
         used = level.edges.map(function () { return false; });
         path = []; currentNode = -1; dragging = false; hintEdge = -1; hintFrom = -1; solved = false; stuckShown = false;
