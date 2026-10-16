@@ -1,108 +1,159 @@
 /* One Line - bản web: nối mọi cạnh bằng một nét vẽ, KHÔNG GIỚI HẠN số màn.
    Mọi màn đều là "chu trình Euler" (mọi điểm có bậc chẵn, đồ thị liên thông) nên người chơi
-   bắt đầu ở BẤT KỲ điểm nào cũng có thể hoàn thành. Từ màn 4 trở đi, màn chơi được sinh tự động. */
+   bắt đầu ở BẤT KỲ điểm nào cũng có thể hoàn thành trọn vẹn. */
 (function () {
   'use strict';
   var PH = window.PH, h = PH.h, T = PH.T, PAL = PH.PALETTE, Sound = PH.Sound, Haptics = PH.Haptics;
   var COST_HINT = 25;
 
-  function polygon(n, cx, cy, rad) {
+  function polygon(n, cx, cy, rad, rot) {
+    var r = (rot !== undefined) ? rot : -90;
     var pts = [];
     for (var k = 0; k < n; k++) {
-      var a = (-90 + (360 / n) * k) * Math.PI / 180;
-      pts.push([cx + rad * Math.cos(a), cy + rad * Math.sin(a)]);
+      var a = (r + (360 / n) * k) * Math.PI / 180;
+      pts.push([
+        Math.round((cx + rad * Math.cos(a)) * 10) / 10,
+        Math.round((cy + rad * Math.sin(a)) * 10) / 10
+      ]);
     }
     return pts;
   }
-  var P5 = polygon(5, 50, 52, 42), P6 = polygon(6, 50, 50, 42);
 
-  var FIXED = {
-    1: { nodes: [[50, 12], [12, 82], [88, 82]], edges: [[0, 1], [1, 2], [2, 0]] },                              // tam giác
-    2: { nodes: P5, edges: [[0, 2], [2, 4], [4, 1], [1, 3], [3, 0]] },                                         // ngôi sao
-    3: { nodes: [[10, 15], [10, 85], [50, 50], [90, 15], [90, 85]], edges: [[0, 2], [1, 2], [0, 1], [2, 3], [2, 4], [3, 4]] }, // nơ
-    5: {
-      nodes: [[12, 12], [88, 12], [88, 88], [12, 88], [50, 12], [88, 50], [50, 88], [12, 50]],                // vuông + thoi
-      edges: [[0, 4], [4, 1], [1, 5], [5, 2], [2, 6], [6, 3], [3, 7], [7, 0], [4, 5], [5, 6], [6, 7], [7, 4]]
-    },
-    8: { nodes: P5, edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [0, 2], [2, 4], [4, 1], [1, 3], [3, 0]] }, // ngũ giác + sao
-    11: { nodes: P6, edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 2], [2, 4], [4, 0], [1, 3], [3, 5], [5, 1]] }
-  };
-
-  /** Sinh màn ngẫu nhiên trên lưới điểm bằng phép XOR các chu trình nhỏ => mọi điểm luôn có bậc chẵn. */
-  function genLevel(target) {
-    var cols = target > 14 ? 5 : 4, rows = target > 18 ? 5 : 4;
-    function id(r, c) { return r * cols + c; }
-    function key(a, b) { return a < b ? a + '-' + b : b + '-' + a; }
-    for (var attempt = 0; attempt < 800; attempt++) {
-      var E = {}, count = 0;
-      var tog = function (a, b) {
-        var k = key(a, b);
-        if (E[k]) { delete E[k]; count--; } else { E[k] = true; count++; }
-      };
-      for (var it = 0; it < 60 && count < target - 1; it++) {
-        var r = PH.rnd(rows - 1), c = PH.rnd(cols - 1);
-        var a = id(r, c), b = id(r, c + 1), cc = id(r + 1, c), d = id(r + 1, c + 1), t = PH.rnd(5);
-        if (t === 0) { tog(a, b); tog(b, d); tog(a, d); }
-        else if (t === 1) { tog(a, cc); tog(cc, d); tog(a, d); }
-        else if (t === 2) { tog(a, b); tog(b, cc); tog(a, cc); }
-        else if (t === 3) { tog(b, d); tog(cc, d); tog(b, cc); }
-        else { tog(a, b); tog(b, d); tog(d, cc); tog(cc, a); }
-      }
-      if (count < target - 2 || count > target + 2) continue;
-      // không cho hai đường chéo cắt nhau trong cùng một ô (dễ nhầm là có điểm ở giữa)
-      var cross = false;
-      for (r = 0; r < rows - 1 && !cross; r++) {
-        for (c = 0; c < cols - 1; c++) {
-          if (E[key(id(r, c), id(r + 1, c + 1))] && E[key(id(r, c + 1), id(r + 1, c))]) { cross = true; break; }
-        }
-      }
-      if (cross) continue;
-      var edges = Object.keys(E).map(function (k) { return k.split('-').map(Number); });
-      // liên thông?
-      var adj = {}, used = {};
-      edges.forEach(function (e) {
-        (adj[e[0]] = adj[e[0]] || []).push(e[1]);
-        (adj[e[1]] = adj[e[1]] || []).push(e[0]);
-      });
-      var verts = Object.keys(adj).map(Number);
-      if (verts.length < 4) continue;
-      var stack = [verts[0]], seen = {};
-      seen[verts[0]] = true;
-      while (stack.length) {
-        var v = stack.pop();
-        adj[v].forEach(function (w) { if (!seen[w]) { seen[w] = true; stack.push(w); } });
-      }
-      if (Object.keys(seen).length !== verts.length) continue;
-      // đánh số lại các điểm được dùng và căn giữa hình
-      var minR = 99, maxR = -1, minC = 99, maxC = -1;
-      verts.forEach(function (v) {
-        var vr = Math.floor(v / cols), vc = v % cols;
-        minR = Math.min(minR, vr); maxR = Math.max(maxR, vr); minC = Math.min(minC, vc); maxC = Math.max(maxC, vc);
-      });
-      var span = Math.max(maxR - minR, maxC - minC, 1), step = 80 / span;
-      var offX = 50 - (maxC - minC) * step / 2, offY = 50 - (maxR - minR) * step / 2;
-      var map = {}, nodes = [];
-      verts.forEach(function (v, i) {
-        map[v] = i;
-        nodes.push([offX + (v % cols - minC) * step, offY + (Math.floor(v / cols) - minR) * step]);
-      });
-      return { nodes: nodes, edges: edges.map(function (e) { return [map[e[0]], map[e[1]]]; }) };
+  function triangulatedRings(n, r1, r2) {
+    var nodes1 = polygon(n, 50, 50, r1, -90);
+    var nodes2 = polygon(n, 50, 50, r2, -90 + 180 / n);
+    var nodes = nodes1.concat(nodes2);
+    var edges = [];
+    var i;
+    for (i = 0; i < n; i++) edges.push([i, (i + 1) % n]);
+    for (i = 0; i < n; i++) edges.push([n + i, n + ((i + 1) % n)]);
+    for (i = 0; i < n; i++) {
+      edges.push([i, n + i]);
+      edges.push([i, n + ((i - 1 + n) % n)]);
     }
-    return null;
+    return { nodes: nodes, edges: edges };
   }
 
+  function flowerHub(n, rTip, angleSpread) {
+    var spread = angleSpread || 22;
+    var nodes = [[50, 50]];
+    var edges = [];
+    for (var k = 0; k < n; k++) {
+      var centerA = -90 + (360 / n) * k;
+      var a1 = (centerA - spread) * Math.PI / 180;
+      var a2 = (centerA + spread) * Math.PI / 180;
+      var p1 = [Math.round((50 + rTip * Math.cos(a1)) * 10) / 10, Math.round((50 + rTip * Math.sin(a1)) * 10) / 10];
+      var p2 = [Math.round((50 + rTip * Math.cos(a2)) * 10) / 10, Math.round((50 + rTip * Math.sin(a2)) * 10) / 10];
+      var idx1 = nodes.length; nodes.push(p1);
+      var idx2 = nodes.length; nodes.push(p2);
+      edges.push([0, idx1]);
+      edges.push([idx1, idx2]);
+      edges.push([idx2, 0]);
+    }
+    return { nodes: nodes, edges: edges };
+  }
+
+  function starPolygon(n, skip, rad) {
+    var r = rad || 38;
+    var nodes = polygon(n, 50, 50, r, -90);
+    var edges = [];
+    var i;
+    for (i = 0; i < n; i++) edges.push([i, (i + 1) % n]);
+    for (i = 0; i < n; i++) edges.push([i, (i + skip) % n]);
+    return { nodes: nodes, edges: edges };
+  }
+
+  // ------------------------------------------------------------------ BỘ SƯU TẬP 24 MÀN THIẾT KẾ ĐỘ KHÓ TĂNG DẦN
+  var P5 = polygon(5, 50, 50, 38, -90);
+  var P6 = polygon(6, 50, 50, 38, -90);
+  var P8 = polygon(8, 50, 50, 38, -90);
+  var P12 = polygon(12, 50, 50, 38, -90);
+
+  var CATALOG = {
+    // Cấp độ 1..3: Làm quen (3 - 6 cạnh)
+    1: { nodes: [[50, 15], [15, 82], [85, 82]], edges: [[0, 1], [1, 2], [2, 0]] },
+    2: { nodes: P5, edges: [[0, 2], [2, 4], [4, 1], [1, 3], [3, 0]] },
+    3: { nodes: [[15, 20], [15, 80], [50, 50], [85, 20], [85, 80]], edges: [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 2]] },
+
+    // Cấp độ 4..7: Nhập môn đa giác (9 - 12 cạnh)
+    4: flowerHub(3, 38, 28),
+    5: {
+      nodes: P5,
+      edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [0, 2], [2, 4], [4, 1], [1, 3], [3, 0]]
+    },
+    6: {
+      nodes: [[15, 15], [85, 15], [85, 85], [15, 85], [50, 15], [85, 50], [50, 85], [15, 50]],
+      edges: [[0, 4], [4, 1], [1, 5], [5, 2], [2, 6], [6, 3], [3, 7], [7, 0], [4, 5], [5, 6], [6, 7], [7, 4]]
+    },
+    7: {
+      nodes: P6,
+      edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 2], [2, 4], [4, 0], [1, 3], [3, 5], [5, 1]]
+    },
+
+    // Cấp độ 8..11: Trung cấp (12 - 15 cạnh)
+    8: flowerHub(4, 38, 22),
+    9: triangulatedRings(3, 38, 19),
+    10: starPolygon(7, 2, 38),
+    11: flowerHub(5, 38, 18),
+
+    // Cấp độ 12..15: Thử thách (16 - 18 cạnh)
+    12: starPolygon(8, 2, 38),
+    13: triangulatedRings(4, 38, 20),
+    14: flowerHub(6, 38, 15),
+    15: starPolygon(9, 2, 38),
+
+    // Cấp độ 16..19: Nâng cao (20 - 24 cạnh)
+    16: starPolygon(10, 2, 38),
+    17: triangulatedRings(5, 38, 20),
+    18: flowerHub(8, 38, 11),
+    19: {
+      nodes: P8,
+      edges: (function () {
+        var e = [], i;
+        for (i = 0; i < 8; i++) e.push([i, (i + 1) % 8]);
+        for (i = 0; i < 8; i++) e.push([i, (i + 2) % 8]);
+        for (i = 0; i < 8; i++) e.push([i, (i + 3) % 8]);
+        return e;
+      })()
+    },
+
+    // Cấp độ 20..24: Bậc thầy hình học (24 - 32 cạnh)
+    20: triangulatedRings(6, 38, 20),
+    21: flowerHub(10, 38, 9),
+    22: triangulatedRings(7, 38, 20),
+    23: {
+      nodes: P12,
+      edges: (function () {
+        var e = [], i;
+        for (i = 0; i < 12; i++) e.push([i, (i + 1) % 12]);
+        for (i = 0; i < 12; i++) e.push([i, (i + 3) % 12]);
+        return e;
+      })()
+    },
+    24: triangulatedRings(8, 38, 20)
+  };
+
+  /** Trả về màn chơi theo cấp độ. Từ màn 25 trở đi sinh chu kỳ các mạng đối xứng Euler vô tận. */
   function levelData(n) {
-    if (FIXED[n]) return FIXED[n];
-    return genLevel(Math.min(24, 4 + n)) || FIXED[11];
+    if (CATALOG[n]) return CATALOG[n];
+    var cycle = (n - 25) % 4;
+    var step = Math.floor((n - 25) / 4);
+    var sectors = Math.min(12, 6 + (step % 7));
+    if (cycle === 0) return triangulatedRings(sectors, 38, 20);
+    if (cycle === 1) return flowerHub(sectors, 38, Math.max(8, 20 - sectors));
+    if (cycle === 2) return starPolygon(sectors, 2, 38);
+    return triangulatedRings(sectors + 1, 38, 19);
   }
 
   PH.games.oneline = {
-    genLevel: genLevel,        // để kiểm thử
+    levelData: levelData,
+    CATALOG: CATALOG,
     start: function (frame) {
       frame.saveOnExit = true;
       var levelNo = 1, total = 0, levelStart = performance.now();
       var level, used, path, currentNode, dragging, fx, fy, hintEdge, hintFrom, solved, stuckShown;
       var left = 0, top = 0, size = 0;
+      var ripples = [];
 
       var levelInfo = h('div', { class: 'hl', style: 'font-size:16px;padding-bottom:0' });
       var status = h('div', { class: 'subtle', text: T('ol_instruction') });
@@ -142,6 +193,7 @@
       function resetPath() {
         used = level.edges.map(function () { return false; });
         path = []; currentNode = -1; dragging = false; hintEdge = -1; hintFrom = -1; solved = false; stuckShown = false;
+        ripples = [];
       }
       function nodeAt(x, y, radius) {
         var best = -1, bd = radius * radius;
@@ -183,6 +235,7 @@
 
       function traverse(edge, to) {
         used[edge] = true; path.push(edge); currentNode = to; hintEdge = -1; hintFrom = -1;
+        ripples.push({ x: nx(to), y: ny(to), start: performance.now(), color: PAL[0] });
         Sound.play('pop'); Haptics.light();
         if (path.length === level.edges.length) {
           solved = true; dragging = false;
@@ -199,8 +252,9 @@
         used[edge] = false;
         var e = level.edges[edge];
         currentNode = (e[0] === currentNode) ? e[1] : e[0];
-        if (!path.length) currentNode = -1;       // gỡ hết thì lại được chọn điểm xuất phát tùy ý
+        if (!path.length) currentNode = -1;
         hintEdge = -1; hintFrom = -1; stuckShown = false;
+        ripples = [];
       }
 
       cv.canvas.addEventListener('pointerdown', function (e) {
@@ -208,11 +262,11 @@
         if (solved) return;
         var p = cv.pos(e);
         cv.canvas.setPointerCapture(e.pointerId);
-        var n = nodeAt(p.x, p.y, 34);
+        var n = nodeAt(p.x, p.y, 36);
         if (n < 0) return;
         if (!path.length) {
-          // chưa vẽ cạnh nào: bắt đầu ở bất kỳ điểm nào
           currentNode = n; dragging = true; fx = p.x; fy = p.y;
+          ripples.push({ x: nx(n), y: ny(n), start: performance.now(), color: PAL[0] });
           Sound.play('tap');
         } else if (n === currentNode) {
           dragging = true; fx = p.x; fy = p.y;
@@ -222,12 +276,12 @@
         if (!dragging) return;
         var p = cv.pos(e);
         fx = p.x; fy = p.y;
-        var n = nodeAt(p.x, p.y, 34 * 0.75);
+        var n = nodeAt(p.x, p.y, 36 * 0.75);
         if (n >= 0 && n !== currentNode) {
           var edge = edgeBetween(currentNode, n);
           if (edge >= 0) {
             if (!used[edge]) traverse(edge, n);
-            else if (path.length && path[path.length - 1] === edge) { undoLast(); currentNode = n; }   // kéo ngược = hoàn tác
+            else if (path.length && path[path.length - 1] === edge) { undoLast(); currentNode = n; }
           }
         }
       });
@@ -235,7 +289,7 @@
       cv.canvas.addEventListener('pointerup', up);
       cv.canvas.addEventListener('pointercancel', up);
 
-      /** Thuật toán Hierholzer: đường đi Euler qua các cạnh còn lại, xuất phát từ điểm start. */
+      /** Thuật toán Hierholzer: tìm đường đi Euler qua các cạnh còn lại */
       function eulerFirstEdge(start) {
         var adj = level.nodes.map(function () { return []; });
         level.edges.forEach(function (e, i) { if (!used[i]) { adj[e[0]].push(i); adj[e[1]].push(i); } });
@@ -278,32 +332,128 @@
         var ctx = cv.ctx, th = PH.theme();
         ctx.clearRect(0, 0, cv.w, cv.h);
         if (!level || !size) return;
-        var w = 9, i, e;
+        var now = performance.now();
+        var w = Math.max(7, Math.min(10, size * 0.026));
+        var i, e;
         ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 1. Cạnh chưa vẽ
         for (i = 0; i < level.edges.length; i++) {
           if (used[i]) continue;
           e = level.edges[i];
           ctx.strokeStyle = i === hintEdge ? th.gold : th.line;
-          ctx.lineWidth = i === hintEdge ? w * 1.3 : w;
+          ctx.lineWidth = i === hintEdge ? w * 1.35 : w;
           ctx.beginPath(); ctx.moveTo(nx(e[0]), ny(e[0])); ctx.lineTo(nx(e[1]), ny(e[1])); ctx.stroke();
         }
-        ctx.strokeStyle = PAL[0]; ctx.lineWidth = w * 1.15;
+
+        // 2. Cạnh đã vẽ (rực rỡ, phát sáng nhẹ)
+        ctx.strokeStyle = PAL[0];
+        ctx.lineWidth = w * 1.2;
         for (i = 0; i < level.edges.length; i++) {
           if (!used[i]) continue;
           e = level.edges[i];
           ctx.beginPath(); ctx.moveTo(nx(e[0]), ny(e[0])); ctx.lineTo(nx(e[1]), ny(e[1])); ctx.stroke();
         }
+
+        // 3. Đường dây thun đang kéo
         if (dragging && currentNode >= 0) {
-          ctx.strokeStyle = PH.alpha(PAL[0], 0.45); ctx.lineWidth = w * 1.15;
+          ctx.strokeStyle = PH.alpha(PAL[0], 0.5);
+          ctx.lineWidth = w * 1.15;
           ctx.beginPath(); ctx.moveTo(nx(currentNode), ny(currentNode)); ctx.lineTo(fx, fy); ctx.stroke();
         }
-        for (i = 0; i < level.nodes.length; i++) {
-          var cur = i === currentNode, r = cur ? 16 : 13;
-          ctx.fillStyle = cur ? PAL[0] : th.surface;
-          ctx.beginPath(); ctx.arc(nx(i), ny(i), r, 0, Math.PI * 2); ctx.fill();
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = cur ? '#fff' : (i === hintFrom && hintEdge >= 0 ? th.gold : PAL[1]);
+
+        // 4. Hiệu ứng sóng lan tỏa khi chạm điểm
+        ripples = ripples.filter(function (rp) { return now - rp.start < 360; });
+        ripples.forEach(function (rp) {
+          var p = (now - rp.start) / 360;
+          var curR = Math.max(0, 13 + p * 20);
+          ctx.save();
+          ctx.strokeStyle = PH.alpha(rp.color, (1 - p) * 0.8);
+          ctx.lineWidth = Math.max(0.5, 3.2 * (1 - p));
+          ctx.beginPath();
+          ctx.arc(rp.x, rp.y, curR, 0, Math.PI * 2);
           ctx.stroke();
+          ctx.restore();
+        });
+
+        // 5. Xác định tập hợp điểm đã nối
+        var connectedMap = {};
+        for (i = 0; i < level.edges.length; i++) {
+          if (used[i]) {
+            connectedMap[level.edges[i][0]] = true;
+            connectedMap[level.edges[i][1]] = true;
+          }
+        }
+        if (currentNode >= 0) {
+          connectedMap[currentNode] = true;
+        }
+
+        // 6. Vẽ các điểm tròn đẹp, ĐẶC 100%, TUYỆT ĐỐI KHÔNG BỊ RỖNG
+        for (i = 0; i < level.nodes.length; i++) {
+          var px = nx(i), py = ny(i);
+          var isCur = (i === currentNode);
+          var isConn = !!connectedMap[i];
+          var isHint = (i === hintFrom && hintEdge >= 0);
+
+          if (isConn) {
+            // ĐIỂM ĐÃ NỐI: Tròn đặc 100% sắc nét, nguyên khối màu hồng rực rỡ, không có ruột rỗng
+            var rConn = isCur ? 15.5 : 12.5;
+
+            ctx.save();
+            ctx.shadowColor = PAL[0];
+            ctx.shadowBlur = isCur ? 12 : 6;
+            ctx.fillStyle = PAL[0];
+            ctx.beginPath();
+            ctx.arc(px, py, rConn, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Viền trắng tinh khôi bo ngoài
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = isCur ? 3.0 : 2.0;
+            ctx.beginPath();
+            ctx.arc(px, py, rConn, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Aura tỏa sáng khi đang kéo
+            if (isCur && dragging) {
+              var pulse = 0.5 + 0.5 * Math.sin(now * 0.012);
+              ctx.strokeStyle = PH.alpha('#FFFFFF', 0.55 * pulse);
+              ctx.lineWidth = 2.0;
+              ctx.beginPath();
+              ctx.arc(px, py, rConn + 4 + pulse * 2.5, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else {
+            // ĐIỂM CHƯA NỐI: Hạt tròn đặc 100%, gọn gàng tinh tế, không rỗng ruột
+            var rUnconn = 9.5;
+            ctx.save();
+            if (isHint) {
+              ctx.shadowColor = th.gold;
+              ctx.shadowBlur = 10;
+              ctx.fillStyle = th.gold;
+              ctx.beginPath();
+              ctx.arc(px, py, rUnconn + 2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 2.5;
+              ctx.stroke();
+            } else {
+              // Hạt tròn đặc 100% màu xanh ngọc pastel, có viền trắng mờ tinh tế
+              ctx.fillStyle = PAL[1];
+              ctx.beginPath();
+              ctx.arc(px, py, rUnconn, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = '#FFFFFF';
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.arc(px, py, rUnconn, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
         }
       });
 
