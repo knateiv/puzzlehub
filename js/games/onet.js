@@ -162,20 +162,23 @@
           var nr = cur.r + dirs[cur.dir][0];
           var nc = cur.c + dirs[cur.dir][1];
           if (nr < -1 || nr > ROWS || nc < -1 || nc > COLS) continue;
-          var key = nr+','+nc+','+cur.dir+','+cur.turns;
-          if (visited[key]) continue;
-          visited[key] = true;
+          var key = nr+','+nc+','+cur.dir;
+          if (visited[key] !== undefined && visited[key] <= cur.turns) continue;
+          visited[key] = cur.turns;
           var isTarget = (nr === r2 && nc === c2);
           var inBounds = (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS);
           if (inBounds && !isTarget && grid[nr][nc] !== null) continue;
           var newPath = cur.path.concat({r:nr, c:nc});
           if (isTarget) return newPath;
-          if (cur.turns >= 2) continue;
+          // Đi tiếp cùng hướng (không tăng số lần rẽ)
           queue.push({r:nr, c:nc, dir:cur.dir, turns:cur.turns, path:newPath});
-          dirs.forEach(function(d, di) {
-            if (di !== cur.dir)
-              queue.push({r:nr, c:nc, dir:di, turns:cur.turns+1, path:newPath});
-          });
+          // Rẽ hướng mới (chỉ được rẽ nếu số lần rẽ < 2)
+          if (cur.turns < 2) {
+            dirs.forEach(function(d, di) {
+              if (di !== cur.dir)
+                queue.push({r:nr, c:nc, dir:di, turns:cur.turns+1, path:newPath});
+            });
+          }
         }
         return null;
       }
@@ -268,6 +271,8 @@
           ap.path.forEach(function(pt, i) {
             var px = L.ox + pt.c * L.cell + L.cell / 2;
             var py2 = L.oy + pt.r * L.cell + L.cell / 2;
+            px = Math.max(6, Math.min(W - 6, px));
+            py2 = Math.max(6, Math.min(H - 6, py2));
             if (i === 0) ctx.moveTo(px, py2); else ctx.lineTo(px, py2);
           });
           ctx.stroke();
