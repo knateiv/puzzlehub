@@ -4,16 +4,16 @@
   var PH = window.PH, h = PH.h, T = PH.T, Store = PH.Store, Sound = PH.Sound;
 
   var catalog = [
-    { id: 'block_blast', nameKey: 'game_block_blast', descKey: 'desc_block_blast', emoji: '🧱', color: '#FF8FAB' },
-    { id: 'tictactoe', nameKey: 'game_tictactoe', descKey: 'desc_tictactoe', emoji: '❌', color: '#8EC5FC' },
-    { id: 'oneline', nameKey: 'game_oneline', descKey: 'desc_oneline', emoji: '✏️', color: '#8FE3C0' },
-    { id: 'watersort', nameKey: 'game_watersort', descKey: 'desc_watersort', emoji: '🧪', color: '#6FDCE3' },
-    { id: 'fruitmerge', nameKey: 'game_fruitmerge', descKey: 'desc_fruitmerge', emoji: '🍉', color: '#FFC48C' },
-    { id: 'whack', nameKey: 'game_whack', descKey: 'desc_whack', emoji: '🔨', color: '#B7A6F2' },
-    { id: 'sudoku', nameKey: 'game_sudoku', descKey: 'desc_sudoku', emoji: '🔢', color: '#4DABF7' },
-    { id: 'onet', nameKey: 'game_onet', descKey: 'desc_onet', emoji: '🔗', color: '#69DB7C' },
-    { id: 'mahjong', nameKey: 'game_mahjong', descKey: 'desc_mahjong', emoji: '🀄', color: '#FF6B6B' },
-    { id: 'blockslide', nameKey: 'game_blockslide', descKey: 'desc_blockslide', emoji: '🚗', color: '#FFA94D' }
+    { id: 'block_blast', nameKey: 'game_block_blast', descKey: 'desc_block_blast', emoji: '🧱', color: '#FF5E8E' },
+    { id: 'tictactoe', nameKey: 'game_tictactoe', descKey: 'desc_tictactoe', emoji: '❌', color: '#3B82F6' },
+    { id: 'oneline', nameKey: 'game_oneline', descKey: 'desc_oneline', emoji: '✏️', color: '#10B981' },
+    { id: 'watersort', nameKey: 'game_watersort', descKey: 'desc_watersort', emoji: '🧪', color: '#06B6D4' },
+    { id: 'fruitmerge', nameKey: 'game_fruitmerge', descKey: 'desc_fruitmerge', emoji: '🍉', color: '#F97316' },
+    { id: 'whack', nameKey: 'game_whack', descKey: 'desc_whack', emoji: '🔨', color: '#8B5CF6' },
+    { id: 'sudoku', nameKey: 'game_sudoku', descKey: 'desc_sudoku', emoji: '🔢', color: '#0284C7' },
+    { id: 'onet', nameKey: 'game_onet', descKey: 'desc_onet', emoji: '🔗', color: '#22C55E' },
+    { id: 'mahjong', nameKey: 'game_mahjong', descKey: 'desc_mahjong', emoji: '🀄', color: '#EF4444' },
+    { id: 'blockslide', nameKey: 'game_blockslide', descKey: 'desc_blockslide', emoji: '🚗', color: '#F59E0B' }
   ];
 
   var app = document.getElementById('app');
@@ -77,43 +77,91 @@
 
   function hubScreen() {
     var main = catalog[0];
-    var heroBadge = h('img', { src: 'icons/icon-192.png', class: 'hero-badge', alt: 'Puzzle Hub' });
+    var isMainPlayed = Store.getBest(main.id) > 0;
+
+    var heroBadge = h('div', { class: 'hero-badge-wrap' }, [
+      h('img', { src: 'icons/icon-192.png', class: 'hero-badge', alt: 'Puzzle Hub' }),
+      h('span', { class: 'hero-badge-halo' })
+    ]);
 
     var hero = h('div', { class: 'hero press', onclick: function () { openGame(main); } }, [
+      h('div', { class: 'hero-tag' }, [
+        h('span', { class: 'hero-tag-ic', text: '🔥' }),
+        h('span', { text: ' ' + T('hub_featured') })
+      ]),
       h('div', { class: 'hero-row' }, [
-        h('div', { style: 'flex:1' }, [
+        h('div', { class: 'hero-content' }, [
           h('h2', { text: T(main.nameKey) }),
           h('p', { text: T(main.descKey) }),
-          h('div', { class: 'bestline', text: bestText(main.id) })
+          h('div', { class: 'hero-bestline' }, [
+            h('span', { text: isMainPlayed ? '🏆 ' : '✨ ' }),
+            h('span', { text: bestText(main.id) })
+          ])
         ]),
         heroBadge
       ]),
-      h('div', { class: 'play', text: T('hub_play_now') })
+      h('div', { class: 'play' }, [
+        h('span', { class: 'play-ic', text: '▶' }),
+        h('span', { text: ' ' + T('hub_play_now') })
+      ])
     ]);
 
     var grid = h('div', { class: 'grid2' });
     catalog.slice(1).forEach(function (g) {
-      grid.appendChild(h('div', { class: 'card press', onclick: function () { openGame(g); } }, [
-        h('div', { class: 'ic', style: 'background:' + PH.alpha(g.color, 0.35), text: g.emoji }),
+      var isPlayed = Store.getBest(g.id) > 0;
+      var ic = h('div', {
+        class: 'ic',
+        style: 'background: radial-gradient(circle at 35% 25%, #ffffff 0%, ' + g.color + ' 50%, ' + PH.alpha(g.color, 0.9) + ' 100%); box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), inset 0 -3px 4px rgba(0,0,0,0.2), 0 7px 16px ' + PH.alpha(g.color, 0.45) + '; border: 2px solid rgba(255,255,255,0.9);',
+        text: g.emoji
+      });
+      var card = h('div', { class: 'card press', onclick: function () { openGame(g); } }, [
+        ic,
         h('div', { class: 'nm', text: T(g.nameKey) }),
         h('div', { class: 'ds', text: T(g.descKey) }),
-        h('div', { class: 'bs', text: bestText(g.id) })
-      ]));
+        h('div', { class: 'bs ' + (isPlayed ? 'played' : 'new') }, [
+          h('span', { text: isPlayed ? '🏆 ' : '✨ ' }),
+          h('span', { text: bestText(g.id) })
+        ])
+      ]);
+      grid.appendChild(card);
     });
 
-    var el = h('div', { class: 'screen scroll' }, [
-      h('div', { class: 'hub-head' }, [
-        h('div', { class: 't' }, [
-          h('h1', { text: '🧩 ' + T('app_name') }),
-          h('div', { class: 's', text: T('hub_subtitle') })
+    var coinsPill = h('div', { class: 'coinchip press', onclick: function () { show(leaderboardScreen()); } }, [
+      h('span', { class: 'coin-ic', text: '🪙' }),
+      h('span', { class: 'coin-num', text: ' ' + Store.getCoins() })
+    ]);
+
+    var head = h('div', { class: 'hub-head' }, [
+      h('div', { class: 'hub-brand' }, [
+        h('div', { class: 'hub-logo-box' }, [
+          h('img', { src: 'icons/icon-192.png', class: 'hub-logo-img', alt: 'Puzzle Hub' })
         ]),
-        h('button', { class: 'iconbtn', text: '🏆', onclick: function () { show(leaderboardScreen()); } }),
-        h('button', { class: 'iconbtn', text: '⚙️', onclick: function () { show(settingsScreen()); } })
+        h('div', { class: 'hub-titles' }, [
+          h('h1', { text: T('app_name') }),
+          h('div', { class: 's', text: T('hub_subtitle') })
+        ])
       ]),
-      h('div', { style: 'margin-top:14px' }, h('span', { class: 'coinchip', text: '🪙 ' + Store.getCoins() })),
-      h('div', { class: 'section', text: T('hub_main_game') }),
+      h('div', { class: 'hub-actions' }, [
+        coinsPill,
+        h('button', { class: 'iconbtn hub-act-btn', title: T('lb_title'), onclick: function () { show(leaderboardScreen()); } }, [h('span', { text: '🏆' })]),
+        h('button', { class: 'iconbtn hub-act-btn', title: T('settings_title'), onclick: function () { show(settingsScreen()); } }, [h('span', { text: '⚙️' })])
+      ])
+    ]);
+
+    var el = h('div', { class: 'screen scroll hub-screen' }, [
+      h('div', { class: 'hub-floating-deco deco-star1', text: '⭐' }),
+      h('div', { class: 'hub-floating-deco deco-star2', text: '✨' }),
+      h('div', { class: 'hub-floating-deco deco-gem1', text: '💎' }),
+      h('div', { class: 'hub-floating-deco deco-sparkle1', text: '🌟' }),
+      head,
+      h('div', { class: 'section hub-sec' }, [
+        h('span', { class: 'sec-badge', text: '⭐ ' + T('hub_main_game') })
+      ]),
       hero,
-      h('div', { class: 'section', text: T('hub_mini_games') }),
+      h('div', { class: 'section hub-sec' }, [
+        h('span', { class: 'sec-badge', text: '🎮 ' + T('hub_mini_games') }),
+        h('span', { class: 'sec-count', text: T('hub_games_count') })
+      ]),
       grid,
       h('div', { style: 'height:24px' })
     ]);

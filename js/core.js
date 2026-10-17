@@ -126,9 +126,10 @@
   // ------------------------------------------------------------------ đa ngôn ngữ
   var STR = {
     vi: {
-      app_name: 'Puzzle Hub', hub_subtitle: 'Thiên đường giải đố – chơi offline 100%',
-      hub_main_game: 'GAME CHÍNH', hub_mini_games: 'MINI GAME', hub_play_now: 'CHƠI NGAY',
-      hub_best: 'Điểm cao: {0}', hub_not_played: 'Chưa chơi',
+      app_name: 'Puzzle Hub', hub_subtitle: 'Thiên đường giải đố',
+      hub_main_game: 'GAME CHÍNH', hub_mini_games: 'BỘ SƯU TẬP TRÒ CHƠI', hub_play_now: 'CHƠI NGAY',
+      hub_featured: 'GAME NỔI BẬT', hub_games_count: '9 trò chơi',
+      hub_best: 'Kỷ lục: {0}', hub_not_played: 'Chưa chơi',
       game_block_blast: 'Phá Khối', game_tictactoe: 'Cờ Caro', game_oneline: 'Một Nét Vẽ',
       game_watersort: 'Rót Nước', game_fruitmerge: 'Ghép Hoa Quả', game_whack: 'Đập Chuột',
       desc_block_blast: 'Kéo thả khối, lấp đầy hàng ngang hoặc dọc để phá hủy',
@@ -187,8 +188,9 @@
       bs_solved: 'Hoàn thành màn!', bs_next: 'Màn tiếp'
     },
     en: {
-      app_name: 'Puzzle Hub', hub_subtitle: 'Your offline puzzle paradise',
-      hub_main_game: 'MAIN GAME', hub_mini_games: 'MINI GAMES', hub_play_now: 'PLAY NOW',
+      app_name: 'Puzzle Hub', hub_subtitle: 'Puzzle Paradise',
+      hub_main_game: 'MAIN GAME', hub_mini_games: 'ALL PUZZLES', hub_play_now: 'PLAY NOW',
+      hub_featured: 'FEATURED', hub_games_count: '9 games',
       hub_best: 'Best: {0}', hub_not_played: 'Not played yet',
       game_block_blast: 'Block Blast', game_tictactoe: 'Tic Tac Toe', game_oneline: 'One Line',
       game_watersort: 'Water Sort', game_fruitmerge: 'Fruit Merge', game_whack: 'Whack-a-Mole',
