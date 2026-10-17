@@ -257,9 +257,12 @@
     return s;
   }
 
-  // ------------------------------------------------------------------ âm thanh (Web Audio, tạo bằng code)
+  // ------------------------------------------------------------------ âm thanh & Nhạc nền Piano thư giãn (GRASS COTTON Cafe Piano)
   var Sound = (function () {
-    var ctx = null, musicNode = null, musicBuf = null, musicGain = null, running = false;
+    var ctx = null;
+    var bgm = null;
+    var fadeTimer = null;
+    var TARGET_VOLUME = 0.38;
 
     var SFX = {
       tap: [[880, 40]], place: [[196, 70], [165, 60]],
@@ -280,9 +283,46 @@
       return ctx;
     }
 
+    function initBgm() {
+      if (bgm) return bgm;
+      try {
+        bgm = new Audio();
+        bgm.src = 'assets/bgm.mp3';
+        bgm.loop = true;
+        bgm.preload = 'auto';
+        bgm.volume = 0;
+        bgm.setAttribute('playsinline', 'true');
+        bgm.setAttribute('webkit-playsinline', 'true');
+      } catch (e) {
+        bgm = null;
+      }
+      return bgm;
+    }
+
+    function fadeVolume(target, durMs, cb) {
+      if (!bgm) return;
+      if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+      if (!durMs) {
+        bgm.volume = target;
+        if (cb) cb();
+        return;
+      }
+      var startVol = bgm.volume;
+      var startTime = Date.now();
+      fadeTimer = setInterval(function () {
+        var elapsed = Date.now() - startTime;
+        var p = Math.min(1, elapsed / durMs);
+        bgm.volume = Math.max(0, Math.min(1, startVol + (target - startVol) * p));
+        if (p >= 1) {
+          clearInterval(fadeTimer);
+          fadeTimer = null;
+          if (cb) cb();
+        }
+      }, 30);
+    }
+
     function unlock() {
-      var c = ensure();
-      if (!c) return;
+      ensure();
       refreshMusic();
     }
 
@@ -305,149 +345,36 @@
       });
     }
 
-    // Nhạc nền: Giai điệu Piano cổ điển du dương, ấm áp và thư giãn (64 BPM, 16 khuông nhạc ~60 giây lặp tuần hoàn).
-    // Âm sắc Piano mộc thuần khiết: bồi âm acoustic, ngân rung dây kép (chorus), tấn công mượt mà không tiếng lộp độp.
-    function buildMusic(c) {
-      var rate = 22050, bpm = 64, beat = 60 / bpm, bars = 16;
-      var N = Math.floor(bars * 4 * beat * rate);
-      var data = new Float32Array(N);
-
-      function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
-
-      // Các bậc bồi âm piano: [bậc, biên độ tương đối, hệ số tắt dần, thời gian tối đa s]
-      var harmonics = [
-        [1, 1.0,  1.0, 3.8],
-        [2, 0.50, 1.4, 2.8],
-        [3, 0.20, 2.1, 1.6],
-        [4, 0.08, 3.0, 0.8],
-        [5, 0.03, 4.2, 0.4]
-      ];
-
-      function addNote(t0, m, vel, dur) {
-        var f0 = mf(m);
-        var detune = 0.22 / f0; // ngân rung tự nhiên giữa các dây đàn
-        var baseDecay = 0.50 + (f0 / 440) * 0.35;
-        var s0 = Math.floor(t0 * rate);
-        var attackTime = 0.015; // 15ms vuốt mượt mà, triệt tiêu hoàn toàn tiếng lách cách / lộp độp
-
-        for (var h = 0; h < harmonics.length; h++) {
-          var hNum = harmonics[h][0], hAmp = harmonics[h][1], hDecMult = harmonics[h][2], hMaxDur = harmonics[h][3];
-          var fk = hNum * f0 * Math.sqrt(1 + 0.00015 * hNum * hNum);
-          var fk2 = fk * (1 + detune);
-          var decay = baseDecay * hDecMult;
-          var w1 = 2 * Math.PI * fk / rate;
-          var w2 = 2 * Math.PI * fk2 / rate;
-          var amp = hAmp * vel * 0.08;
-
-          var noteDur = Math.min(dur || 4.0, hMaxDur);
-          var nSamples = Math.floor(noteDur * rate);
-
-          for (var i = 0; i < nSamples; i++) {
-            var t = i / rate;
-            var env = (t < attackTime) ? 0.5 * (1 - Math.cos(Math.PI * t / attackTime)) : 1;
-            env *= Math.exp(-decay * t);
-            if (t > attackTime && env < 0.00003) break;
-            var val = (Math.sin(w1 * i) + 0.55 * Math.sin(w2 * i)) * env * amp;
-            data[(s0 + i) % N] += val;
-          }
-        }
-      }
-
-      // Hợp âm tay trái trầm ấm, giữ pedal ngân dài bồng bềnh
-      var chordsLH = [
-        [[0.0, 36, 0.65, 4.0], [1.0, 55, 0.40, 3.0], [1.0, 64, 0.40, 3.0], [1.0, 71, 0.35, 3.0]],
-        [[0.0, 35, 0.65, 4.0], [1.0, 55, 0.40, 3.0], [1.0, 64, 0.40, 3.0], [1.0, 74, 0.35, 3.0]],
-        [[0.0, 33, 0.65, 4.0], [1.0, 52, 0.40, 3.0], [1.0, 60, 0.40, 3.0], [1.0, 67, 0.35, 3.0]],
-        [[0.0, 29, 0.65, 4.0], [1.0, 48, 0.40, 3.0], [1.0, 57, 0.40, 3.0], [1.0, 64, 0.35, 3.0]],
-        [[0.0, 38, 0.65, 4.0], [1.0, 57, 0.40, 3.0], [1.0, 65, 0.40, 3.0], [1.0, 72, 0.35, 3.0]],
-        [[0.0, 31, 0.65, 4.0], [1.0, 53, 0.40, 3.0], [1.0, 60, 0.40, 2.0], [3.0, 59, 0.35, 1.5]],
-        [[0.0, 40, 0.65, 4.0], [1.0, 59, 0.40, 3.0], [1.0, 67, 0.40, 3.0], [1.0, 74, 0.35, 3.0]],
-        [[0.0, 33, 0.65, 4.0], [1.0, 52, 0.40, 3.0], [1.0, 60, 0.40, 3.0], [1.0, 67, 0.35, 3.0]],
-        [[0.0, 38, 0.65, 4.0], [1.0, 53, 0.40, 3.0], [1.0, 60, 0.40, 3.0], [1.0, 64, 0.35, 3.0]],
-        [[0.0, 31, 0.65, 4.0], [1.0, 53, 0.40, 3.0], [1.0, 59, 0.40, 3.0], [1.0, 64, 0.35, 3.0]],
-        [[0.0, 36, 0.65, 4.0], [1.0, 52, 0.40, 3.0], [1.0, 59, 0.40, 3.0], [1.0, 67, 0.35, 3.0]],
-        [[0.0, 29, 0.65, 4.0], [1.0, 48, 0.40, 3.0], [1.0, 57, 0.40, 3.0], [1.0, 64, 0.35, 3.0]],
-        [[0.0, 38, 0.65, 4.0], [1.0, 57, 0.40, 3.0], [1.0, 65, 0.40, 3.0], [1.0, 72, 0.35, 3.0]],
-        [[0.0, 31, 0.65, 4.0], [1.0, 50, 0.40, 3.0], [1.0, 55, 0.40, 3.0], [2.5, 59, 0.35, 1.5]],
-        [[0.0, 36, 0.65, 4.0], [1.0, 55, 0.40, 3.0], [1.0, 62, 0.40, 3.0], [1.0, 64, 0.35, 3.0]],
-        [[0.0, 36, 0.50, 4.0], [1.0, 48, 0.35, 3.5], [2.0, 55, 0.30, 2.5], [3.0, 64, 0.25, 2.0]]
-      ];
-
-      // Giai điệu tay phải nhẹ nhàng, thanh thoát, sâu lắng
-      var melody = [
-        [0, 0.0, 76, 0.62, 2.5], [0, 2.5, 74, 0.52, 1.5],
-        [1, 0.0, 71, 0.60, 2.2], [1, 2.0, 72, 0.52, 1.0], [1, 3.0, 74, 0.55, 1.0],
-        [2, 0.0, 72, 0.60, 2.8], [2, 3.0, 69, 0.50, 1.0],
-        [3, 0.0, 67, 0.60, 1.8], [3, 2.0, 71, 0.52, 1.0], [3, 3.0, 72, 0.55, 1.0],
-        [4, 0.0, 74, 0.62, 2.5], [4, 2.5, 76, 0.52, 1.5],
-        [5, 0.0, 74, 0.60, 2.2], [5, 2.0, 71, 0.50, 1.0], [5, 3.0, 72, 0.55, 1.0],
-        [6, 0.0, 67, 0.60, 2.8], [6, 3.0, 71, 0.50, 1.0],
-        [7, 0.0, 69, 0.62, 2.8], [7, 3.0, 72, 0.55, 1.0],
-        [8, 0.0, 74, 0.65, 2.0], [8, 2.0, 76, 0.58, 1.0], [8, 3.0, 77, 0.62, 1.0],
-        [9, 0.0, 79, 0.70, 2.5], [9, 2.5, 77, 0.55, 0.8], [9, 3.25, 76, 0.55, 0.8],
-        [10, 0.0, 76, 0.68, 2.8], [10, 2.5, 74, 0.55, 0.8], [10, 3.25, 72, 0.60, 0.8],
-        [11, 0.0, 72, 0.65, 2.2], [11, 2.0, 71, 0.52, 1.0], [11, 3.0, 69, 0.52, 1.0],
-        [12, 0.0, 69, 0.62, 2.0], [12, 2.0, 71, 0.52, 1.0], [12, 3.0, 72, 0.58, 1.0],
-        [13, 0.0, 74, 0.62, 2.5], [13, 2.5, 71, 0.52, 1.5],
-        [14, 0.0, 72, 0.62, 3.5],
-        [15, 0.0, 76, 0.50, 4.0], [15, 2.0, 84, 0.40, 3.0]
-      ];
-
-      for (var b = 0; b < chordsLH.length; b++) {
-        var barT = b * 4 * beat;
-        var evs = chordsLH[b];
-        for (var e = 0; e < evs.length; e++) {
-          addNote(barT + evs[e][0] * beat, evs[e][1], evs[e][2] * 0.7, evs[e][3] * beat);
-        }
-      }
-
-      for (var mIdx = 0; mIdx < melody.length; mIdx++) {
-        var ev = melody[mIdx];
-        var tM = (ev[0] * 4 + ev[1]) * beat;
-        addNote(tM, ev[2], ev[3], ev[4] * beat);
-      }
-
-      // Độ vang êm ái của thùng đàn (mượt mà, không tiếng dội rời rạc)
-      var diffDelay = Math.floor(0.18 * rate);
-      var diffGain = 0.18;
-      var diffBuf = new Float32Array(N);
-      for (var s = 0; s < N; s++) {
-        var src = (s - diffDelay + N) % N;
-        diffBuf[s] = data[src] * diffGain;
-      }
-      for (s = 0; s < N; s++) data[s] += diffBuf[s];
-
-      var peak = 0;
-      for (var p = 0; p < N; p++) peak = Math.max(peak, Math.abs(data[p]));
-      var g = peak > 0 ? 0.72 / peak : 1;
-      for (p = 0; p < N; p++) data[p] *= g;
-
-      var buf = c.createBuffer(1, N, rate);
-      buf.getChannelData(0).set(data);
-      return buf;
-    }
-
     function refreshMusic() {
       var want = Store.isMusic() && !document.hidden;
-      if (want && !running) {
-        var c = ensure();
-        if (!c) return;
-        if (!musicBuf) musicBuf = buildMusic(c);
-        musicGain = c.createGain();
-        musicGain.gain.value = 0.42;
-        musicNode = c.createBufferSource();
-        musicNode.buffer = musicBuf;
-        musicNode.loop = true;
-        musicNode.connect(musicGain); musicGain.connect(c.destination);
-        musicNode.start();
-        running = true;
-      } else if (!want && running) {
-        try { musicNode.stop(); } catch (e) { /* đã dừng */ }
-        running = false;
+      var a = initBgm();
+      if (!a) return;
+      if (want) {
+        if (a.paused) {
+          a.volume = 0;
+          var p = a.play();
+          if (p && typeof p.then === 'function') {
+            p.then(function () {
+              fadeVolume(TARGET_VOLUME, 1000);
+            }).catch(function () {
+              // Autoplay bị chặn bởi browser, chờ tương tác qua unlock()
+            });
+          } else {
+            fadeVolume(TARGET_VOLUME, 1000);
+          }
+        } else if (a.volume < TARGET_VOLUME) {
+          fadeVolume(TARGET_VOLUME, 600);
+        }
+      } else {
+        if (!a.paused) {
+          fadeVolume(0, 300, function () {
+            try { a.pause(); } catch (e) {}
+          });
+        }
       }
     }
 
-    document.addEventListener('visibilitychange', function () { if (ctx) refreshMusic(); });
+    document.addEventListener('visibilitychange', function () { refreshMusic(); });
     return { play: play, unlock: unlock, refreshMusic: refreshMusic };
   })();
 
