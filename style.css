@@ -79,11 +79,119 @@ html, body {
 .power .nm { font-size: 12px; font-weight: 700; display: block; }
 .power .pr { font-size: 11px; font-weight: 700; color: var(--text2); display: block; }
 
-/* trang chủ */
-.hub-head { display: flex; align-items: center; gap: 8px; }
-.hub-head .t { flex: 1; }
-.hub-head h1 { margin: 0; font-size: 28px; font-weight: 800; }
-.hub-head .s { font-size: 13px; color: var(--text2); }
+/* trang chủ - Phong cách Arcade 3D rực rỡ chuẩn Splash Option 1 */
+.hub-screen {
+  background: radial-gradient(130% 65% at 50% -5%, #FFF3E6 0%, #FFE6EF 36%, #F0F4FF 72%, #FFF8F3 100%);
+}
+.hub-screen::before {
+  content: ""; position: absolute; top: -60px; left: -25%; right: -25%; height: 260px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 214, 102, 0.32) 0%, rgba(255, 143, 171, 0.25) 30%, rgba(142, 197, 252, 0.22) 58%, transparent 75%);
+  pointer-events: none; z-index: 0;
+}
+:root[data-theme="dark"] .hub-screen {
+  background: radial-gradient(130% 65% at 50% -5%, #2B1D48 0%, #1E1B2E 55%, #151324 100%);
+}
+:root[data-theme="dark"] .hub-screen::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 143, 171, 0.3) 0%, rgba(114, 9, 183, 0.26) 40%, rgba(77, 171, 247, 0.18) 65%, transparent 75%);
+}
+
+/* Floating sparkle and magical decor matching Splash Option 1 */
+.hub-floating-deco {
+  position: absolute; pointer-events: none; z-index: 1;
+  opacity: 0.85; filter: drop-shadow(0 2px 6px rgba(255, 183, 3, 0.45));
+  animation: floatDeco 3.6s ease-in-out infinite alternate;
+  user-select: none;
+}
+.deco-star1 { top: 12px; right: 185px; font-size: 15px; animation-delay: 0s; }
+.deco-star2 { top: 78px; right: 18px; font-size: 17px; animation-delay: 0.8s; }
+.deco-gem1 { top: 160px; left: 14px; font-size: 16px; animation-delay: 1.5s; opacity: 0.75; }
+.deco-sparkle1 { top: 295px; right: 14px; font-size: 16px; animation-delay: 2.2s; opacity: 0.7; }
+
+@keyframes floatDeco {
+  0% { transform: translateY(0px) rotate(0deg) scale(1); }
+  50% { transform: translateY(-5px) rotate(8deg) scale(1.12); }
+  100% { transform: translateY(-10px) rotate(-6deg) scale(0.96); }
+}
+
+.hub-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; position: relative; z-index: 2; margin-bottom: 2px;
+  flex: 0 0 auto;
+}
+.hub-brand {
+  display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0;
+}
+.hub-logo-box {
+  width: 42px; height: 42px; flex: 0 0 42px;
+  border-radius: 13px; overflow: hidden;
+  background: linear-gradient(135deg, #FFE5B4, #FFA8A8);
+  box-shadow: 0 4px 12px rgba(255, 143, 171, 0.35), inset 0 1px 2px #fff;
+  border: 2px solid #FFFFFF;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.hub-logo-img { width: 100%; height: 100%; object-fit: cover; }
+.hub-titles { flex: 1; min-width: 0; }
+.hub-titles h1 {
+  margin: 0; font-size: 21.5px; font-weight: 900; line-height: 1.15;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #3D3A5C 0%, #69417E 45%, #C93B6D 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+:root[data-theme="dark"] .hub-titles h1 {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFD1E3 50%, #FF8FAB 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hub-titles .s {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  letter-spacing: 0.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.hub-actions {
+  display: flex; align-items: center; gap: 6px; flex: 0 0 auto;
+}
+.coinchip {
+  background: linear-gradient(135deg, #FFE066 0%, #FFB703 100%);
+  padding: 6px 10px; border-radius: 15px; font-weight: 800; font-size: 13px;
+  color: #5A3900; border: 1.5px solid #FFF3B0;
+  box-shadow: 0 4px 12px rgba(255, 183, 3, 0.35), inset 0 1px 2px #fff;
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.coinchip:active { transform: scale(0.94); }
+.hub-act-btn {
+  width: 38px; height: 38px; border-radius: 13px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5EDFA 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 10px rgba(90, 50, 130, 0.1), inset 0 1px 1px #fff;
+  font-size: 17px; color: var(--text);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: transform 0.12s ease;
+}
+:root[data-theme="dark"] .hub-act-btn {
+  background: linear-gradient(180deg, #352F52 0%, #26213D 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.hub-sec {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 2px 6px; position: relative; z-index: 1;
+  flex: 0 0 auto;
+}
+.sec-badge {
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em;
+  color: #C24177; text-transform: uppercase;
+  background: rgba(255, 143, 171, 0.18);
+  padding: 4px 10px; border-radius: 12px;
+}
+:root[data-theme="dark"] .sec-badge {
+  color: #FFAEC5; background: rgba(255, 143, 171, 0.22);
+}
+.sec-count {
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
 .section { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: .12em; padding: 22px 4px 0; }
 /* Màn hình Splash khởi động nghệ thuật chuẩn thương mại */
 #splash {
@@ -148,31 +256,154 @@ html, body {
   50% { opacity: 1; transform: translateY(-2px); }
 }
 
+/* Hero Banner - Marquee Flagship Arcade Card */
 .hero {
-  margin-top: 10px; border-radius: 30px; padding: 18px 20px 20px; color: #fff;
-  background: linear-gradient(135deg, #FF8FAB, #FFB38A); cursor: pointer;
+  position: relative; z-index: 1; margin-top: 4px;
+  border-radius: 30px; padding: 18px 20px;
+  color: #ffffff;
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, #FF5376 0%, #FF6584 25%, #FF8FAB 52%, #FFAE73 78%, #FFD166 100%);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 16px 36px -8px rgba(255, 83, 118, 0.45), 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 2px 3px rgba(255, 255, 255, 0.7);
+  cursor: pointer; overflow: hidden;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease;
 }
-.hero-row { display: flex; align-items: center; gap: 14px; }
-.hero h2 { margin: 0; font-size: 30px; font-weight: 800; }
-.hero p { margin: 4px 0 8px; font-size: 14px; opacity: .92; }
-.hero .bestline { font-size: 14px; font-weight: 700; }
-.hero .play { margin-top: 16px; background: #fff; color: #F2668B; border-radius: 26px; height: 52px; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; }
+:root[data-theme="dark"] .hero {
+  background: linear-gradient(135deg, #E63966 0%, #B5179E 50%, #480CA8 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 16px 36px -8px rgba(181, 23, 158, 0.5), inset 0 2px 3px rgba(255, 255, 255, 0.5);
+}
+.hero::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 100%);
+  pointer-events: none; border-radius: 28px;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(0, 0, 0, 0.2); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 12px; padding: 3px 9px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+  color: #FFF6CF; margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.hero-row { display: flex; align-items: center; gap: 14px; position: relative; z-index: 2; }
+.hero-content { flex: 1; min-width: 0; }
+.hero h2 {
+  margin: 0; font-size: 28px; font-weight: 900; line-height: 1.15;
+  text-shadow: 0 2px 8px rgba(160, 20, 60, 0.35);
+  letter-spacing: -0.3px;
+}
+.hero p {
+  margin: 4px 0 10px; font-size: 13px; line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95); text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.hero-bestline {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  border-radius: 14px; padding: 4px 10px;
+  font-size: 12px; font-weight: 800; color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.hero-badge-wrap {
+  position: relative; flex: 0 0 92px; width: 92px; height: 92px;
+}
 .hero-badge {
-  width: 92px; height: 92px; flex: 0 0 92px;
-  border-radius: 22px;
+  width: 92px; height: 92px; border-radius: 22px;
   object-fit: cover;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3), inset 0 2px 3px rgba(255, 255, 255, 0.8);
+  border: 2.5px solid #FFF3C4;
+  display: block; position: relative; z-index: 2;
 }
-.decor { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; width: 96px; height: 96px; flex: 0 0 96px; }
-.decor i { border-radius: 5px; background: rgba(255, 255, 255, .22); }
-.decor i.on1 { background: #fff; } .decor i.on2 { background: rgba(255, 255, 255, .8); }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-.card { background: var(--surface); border-radius: 26px; padding: 16px 16px 14px; cursor: pointer; }
-.card .ic { width: 52px; height: 52px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-.card .nm { font-size: 17px; font-weight: 800; margin-top: 10px; }
-.card .ds { font-size: 12px; color: var(--text2); min-height: 32px; }
-.card .bs { font-size: 12px; font-weight: 700; color: var(--accent-dark); margin-top: 8px; }
+.hero-badge-halo {
+  position: absolute; inset: -4px; border-radius: 26px;
+  background: radial-gradient(circle, rgba(255, 214, 102, 0.6) 0%, transparent 70%);
+  z-index: 1; pointer-events: none;
+  animation: haloPulse 2.4s ease-in-out infinite alternate;
+}
+@keyframes haloPulse {
+  0% { opacity: 0.4; transform: scale(0.96); }
+  100% { opacity: 0.9; transform: scale(1.05); }
+}
+.hero .play {
+  margin-top: 14px; position: relative; z-index: 2;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFF5EF 65%, #FFE9DE 100%);
+  color: #E62E62;
+  border-radius: 26px; height: 50px;
+  font-weight: 900; font-size: 16px; letter-spacing: 0.5px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 5px 0 #E27993, 0 12px 22px rgba(180, 20, 60, 0.28), inset 0 1px 2px #fff;
+  border: 1.5px solid #FFFFFF;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.hero:active .play {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #E27993, 0 6px 14px rgba(180, 20, 60, 0.22);
+}
+:root[data-theme="dark"] .hero .play {
+  box-shadow: 0 5px 0 #9D174D, 0 12px 24px rgba(0, 0, 0, 0.35), inset 0 1px 2px #fff;
+}
+:root[data-theme="dark"] .hero:active .play {
+  box-shadow: 0 2px 0 #9D174D, 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Lưới thẻ game Arcade */
+.grid2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px;
+  position: relative; z-index: 1; flex: 0 0 auto;
+}
+.card {
+  position: relative; border-radius: 24px; padding: 14px 14px 12px;
+  background: linear-gradient(165deg, #FFFFFF 0%, #FFFDFC 60%, rgba(255, 240, 245, 0.5) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 22px -4px rgba(70, 40, 90, 0.08), 0 2px 6px rgba(0, 0, 0, 0.02);
+  cursor: pointer; display: flex; flex-direction: column;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease;
+  overflow: hidden;
+}
+:root[data-theme="dark"] .card {
+  background: linear-gradient(165deg, #2D2845 0%, #231F38 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.35);
+}
+.card:active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: 0 4px 12px -2px rgba(70, 40, 90, 0.16);
+}
+.card .ic {
+  width: 52px; height: 52px; border-radius: 17px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.06));
+}
+.card .nm {
+  font-size: 15.5px; font-weight: 800; margin-top: 10px;
+  color: var(--text); line-height: 1.2;
+}
+.card .ds {
+  font-size: 11.5px; color: var(--text2); min-height: 28px;
+  line-height: 1.35; margin-top: 3px; font-weight: 500;
+}
+.card .bs {
+  margin-top: 8px; font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 4px;
+  border-radius: 10px; padding: 3px 7px; width: fit-content;
+}
+.card .bs.played {
+  background: rgba(255, 183, 3, 0.18); color: #B37400;
+  border: 1px solid rgba(255, 183, 3, 0.3);
+}
+:root[data-theme="dark"] .card .bs.played {
+  background: rgba(255, 183, 3, 0.22); color: #FFD166;
+}
+.card .bs.new {
+  background: rgba(142, 197, 252, 0.18); color: #2B6CB0;
+  border: 1px solid rgba(142, 197, 252, 0.3);
+}
+:root[data-theme="dark"] .card .bs.new {
+  background: rgba(142, 197, 252, 0.2); color: #90CDF4;
+}
 
 /* cài đặt / bảng xếp hạng */
 .panel { background: var(--surface); border-radius: 26px; padding: 8px 18px; margin-top: 18px; }

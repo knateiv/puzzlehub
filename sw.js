@@ -1,7 +1,7 @@
 /* Service worker: lưu toàn bộ file để chơi offline.
    Chiến lược "mạng trước": có mạng thì luôn lấy bản mới nhất (và cập nhật bộ nhớ đệm),
    mất mạng thì dùng bản đã lưu. */
-var CACHE = 'puzzlehub-v15';
+var CACHE = 'puzzlehub-v16';
 var FILES = [
   './', './index.html', './style.css', './manifest.webmanifest',
   './assets/splash.jpg',
