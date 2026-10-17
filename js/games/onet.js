@@ -149,38 +149,96 @@
         }
       }
 
-      // ── BFS pathfinding ≤2 lần rẽ ────────────────────────────────
+      // ── Thuật toán nối hình Onet chuẩn: tối đa 2 lần rẽ (3 đoạn thẳng) ──
+      function isPassable(r, c) {
+        if (r < -1 || r > ROWS || c < -1 || c > COLS) return false;
+        if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+          return grid[r][c] === null;
+        }
+        return true; // Mép ngoài bao quanh bàn cờ luôn trống
+      }
+
+      function lineClear(r1, c1, r2, c2) {
+        if (r1 !== r2 && c1 !== c2) return false;
+        if (r1 === r2) {
+          var minC = Math.min(c1, c2), maxC = Math.max(c1, c2);
+          for (var c = minC + 1; c < maxC; c++) {
+            if (!isPassable(r1, c)) return false;
+          }
+          return true;
+        } else {
+          var minR = Math.min(r1, r2), maxR = Math.max(r1, r2);
+          for (var r = minR + 1; r < maxR; r++) {
+            if (!isPassable(r, c1)) return false;
+          }
+          return true;
+        }
+      }
+
+      function makeLine(r1, c1, r2, c2) {
+        var pts = [];
+        if (r1 === r2) {
+          var stepC = c1 <= c2 ? 1 : -1;
+          for (var c = c1; c !== c2; c += stepC) pts.push({ r: r1, c: c });
+          pts.push({ r: r2, c: c2 });
+        } else {
+          var stepR = r1 <= r2 ? 1 : -1;
+          for (var r = r1; r !== r2; r += stepR) pts.push({ r: r, c: c1 });
+          pts.push({ r: r2, c: c2 });
+        }
+        return pts;
+      }
+
       function findPath(r1, c1, r2, c2) {
-        var dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-        var queue = [];
-        dirs.forEach(function(d, di) {
-          queue.push({r:r1, c:c1, dir:di, turns:0, path:[{r:r1,c:c1}]});
-        });
-        var visited = {};
-        while (queue.length) {
-          var cur = queue.shift();
-          var nr = cur.r + dirs[cur.dir][0];
-          var nc = cur.c + dirs[cur.dir][1];
-          if (nr < -1 || nr > ROWS || nc < -1 || nc > COLS) continue;
-          var key = nr+','+nc+','+cur.dir;
-          if (visited[key] !== undefined && visited[key] <= cur.turns) continue;
-          visited[key] = cur.turns;
-          var isTarget = (nr === r2 && nc === c2);
-          var inBounds = (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS);
-          if (inBounds && !isTarget && grid[nr][nc] !== null) continue;
-          var newPath = cur.path.concat({r:nr, c:nc});
-          if (isTarget) return newPath;
-          // Đi tiếp cùng hướng (không tăng số lần rẽ)
-          queue.push({r:nr, c:nc, dir:cur.dir, turns:cur.turns, path:newPath});
-          // Rẽ hướng mới (chỉ được rẽ nếu số lần rẽ < 2)
-          if (cur.turns < 2) {
-            dirs.forEach(function(d, di) {
-              if (di !== cur.dir)
-                queue.push({r:nr, c:nc, dir:di, turns:cur.turns+1, path:newPath});
-            });
+        if (r1 === r2 && c1 === c2) return null;
+
+        // 1. Đường thẳng 0 lần rẽ (1 đoạn thẳng)
+        if (lineClear(r1, c1, r2, c2)) {
+          return makeLine(r1, c1, r2, c2);
+        }
+
+        // 2. Đường chữ L 1 lần rẽ (2 đoạn thẳng)
+        // Góc cua 1: (r1, c2)
+        if (isPassable(r1, c2) && lineClear(r1, c1, r1, c2) && lineClear(r1, c2, r2, c2)) {
+          return makeLine(r1, c1, r1, c2).concat(makeLine(r1, c2, r2, c2).slice(1));
+        }
+        // Góc cua 2: (r2, c1)
+        if (isPassable(r2, c1) && lineClear(r1, c1, r2, c1) && lineClear(r2, c1, r2, c2)) {
+          return makeLine(r1, c1, r2, c1).concat(makeLine(r2, c1, r2, c2).slice(1));
+        }
+
+        // 3. Đường chữ Z / U 2 lần rẽ (3 đoạn thẳng)
+        var bestPath = null;
+
+        // Dạng 1: Ngang -> Dọc -> Ngang qua kênh cột c (cột từ -1 đến COLS)
+        // (r1, c1) -> (r1, c) -> (r2, c) -> (r2, c2)
+        for (var c = -1; c <= COLS; c++) {
+          if (c === c1 && c === c2) continue;
+          if (isPassable(r1, c) && isPassable(r2, c)) {
+            if (lineClear(r1, c1, r1, c) && lineClear(r1, c, r2, c) && lineClear(r2, c, r2, c2)) {
+              var p1 = makeLine(r1, c1, r1, c)
+                .concat(makeLine(r1, c, r2, c).slice(1))
+                .concat(makeLine(r2, c, r2, c2).slice(1));
+              if (!bestPath || p1.length < bestPath.length) bestPath = p1;
+            }
           }
         }
-        return null;
+
+        // Dạng 2: Dọc -> Ngang -> Dọc qua kênh hàng r (hàng từ -1 đến ROWS)
+        // (r1, c1) -> (r, c1) -> (r, c2) -> (r2, c2)
+        for (var r = -1; r <= ROWS; r++) {
+          if (r === r1 && r === r2) continue;
+          if (isPassable(r, c1) && isPassable(r, c2)) {
+            if (lineClear(r1, c1, r, c1) && lineClear(r, c1, r, c2) && lineClear(r, c2, r2, c2)) {
+              var p2 = makeLine(r1, c1, r, c1)
+                .concat(makeLine(r, c1, r, c2).slice(1))
+                .concat(makeLine(r, c2, r2, c2).slice(1));
+              if (!bestPath || p2.length < bestPath.length) bestPath = p2;
+            }
+          }
+        }
+
+        return bestPath;
       }
 
       function findHintPair() {
@@ -263,10 +321,14 @@
         animPairs = animPairs.filter(function(ap) {
           ap.alpha -= 0.08;
           if (ap.alpha <= 0) return false;
+          ctx.save();
           ctx.globalAlpha = ap.alpha;
           ctx.strokeStyle = '#69DB7C';
-          ctx.lineWidth = 4;
+          ctx.lineWidth = 5;
           ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.shadowColor = '#69DB7C';
+          ctx.shadowBlur = 10;
           ctx.beginPath();
           ap.path.forEach(function(pt, i) {
             var px = L.ox + pt.c * L.cell + L.cell / 2;
@@ -276,7 +338,7 @@
             if (i === 0) ctx.moveTo(px, py2); else ctx.lineTo(px, py2);
           });
           ctx.stroke();
-          ctx.globalAlpha = 1;
+          ctx.restore();
           return true;
         });
         if (animPairs.length) requestAnimationFrame(draw);
