@@ -305,72 +305,149 @@
       });
     }
 
-    // Nhạc nền: vòng hợp âm lo-fi nhẹ nhàng Fmaj7 - Em7 - Dm7 - Cmaj7 (84 BPM, khoảng 23 giây rồi lặp lại).
-    // Gồm pad êm, rải hợp âm, bass, giai điệu chuông và trống nhẹ - tất cả được tạo bằng code.
+    // Nhạc nền: Giai điệu Piano cổ điển du dương, ấm áp và thư giãn (70 BPM, 16 khuông nhạc ~55 giây lặp tuần hoàn).
+    // Được tổng hợp hoàn toàn bằng Web Audio: dải bồi âm acoustic piano, dây kép ngân vang (chorus detune),
+    // tiếng búa nỉ chạm nhẹ và âm hưởng thùng đàn gỗ (soundboard resonance), không kèm trống.
     function buildMusic(c) {
-      var rate = 22050, bpm = 84, beat = 60 / bpm, bars = 8;
+      var rate = 22050, bpm = 70, beat = 60 / bpm, bars = 16;
       var N = Math.floor(bars * 4 * beat * rate);
       var data = new Float32Array(N);
-      var chords = [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59]];
-      var melody = [[76, 74, 72, 0], [71, 72, 74, 0], [72, 69, 67, 0], [64, 67, 71, 72]];
-      var arp = [0, 1, 2, 3, 2, 1, 2, 3];
+
       function mf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
-      // ghi một nốt vào bộ đệm (vòng lặp liền mạch nhờ chỉ số % N)
-      function note(t0, dur, f, amp, o) {
-        var a = o.attack || 0.01, rel = o.release || 0.1, dec = o.decay || 0;
-        var n = Math.floor((dur + rel) * rate), s0 = Math.floor(t0 * rate), w = 2 * Math.PI * f / rate;
-        for (var i = 0; i < n; i++) {
-          var t = i / rate, env = t < a ? t / a : 1;
-          if (dec && t > a) env *= Math.exp(-dec * (t - a));
-          if (t > dur) env *= Math.max(0, 1 - (t - dur) / rel);
-          var ph = w * i, v = Math.sin(ph);
-          if (o.h2) v += o.h2 * Math.sin(2 * ph);
-          if (o.h3) v += o.h3 * Math.sin(3 * ph);
-          data[(s0 + i) % N] += v * env * amp;
+
+      // Các bậc bồi âm piano: [bậc, biên độ tương đối, hệ số tắt dần, thời gian tối đa s]
+      var harmonics = [
+        [1, 1.0, 1.0, 3.4],
+        [2, 0.55, 1.5, 2.4],
+        [3, 0.28, 2.2, 1.4],
+        [4, 0.14, 3.2, 0.7],
+        [5, 0.07, 4.5, 0.4],
+        [6, 0.03, 6.0, 0.22],
+        [7, 0.015, 8.0, 0.14]
+      ];
+
+      function addNote(t0, m, vel, dur) {
+        var f0 = mf(m);
+        var detune = 0.28 / f0; // độ lệch âm rất nhỏ giữa 2 dây đàn để tạo độ ngân rung tự nhiên
+        var baseDecay = 0.65 + (f0 / 440) * 0.45;
+        var s0 = Math.floor(t0 * rate);
+
+        for (var h = 0; h < harmonics.length; h++) {
+          var hNum = harmonics[h][0], hAmp = harmonics[h][1], hDecMult = harmonics[h][2], hMaxDur = harmonics[h][3];
+          var fk = hNum * f0 * Math.sqrt(1 + 0.00018 * hNum * hNum);
+          var fk2 = fk * (1 + detune);
+          var decay = baseDecay * hDecMult;
+          var w1 = 2 * Math.PI * fk / rate;
+          var w2 = 2 * Math.PI * fk2 / rate;
+          var amp = hAmp * vel * 0.09;
+
+          var noteDur = Math.min(dur || 3.2, hMaxDur);
+          var nSamples = Math.floor(noteDur * rate);
+
+          for (var i = 0; i < nSamples; i++) {
+            var t = i / rate;
+            var attack = t < 0.005 ? t / 0.005 : 1;
+            var env = attack * Math.exp(-decay * t);
+            if (env < 0.00005) break;
+            var val = (Math.sin(w1 * i) + 0.65 * Math.sin(w2 * i)) * env * amp;
+            data[(s0 + i) % N] += val;
+          }
+        }
+
+        // Tiếng chạm búa bọc nỉ gõ vào dây đàn (soft felt hammer impact)
+        var knockN = Math.floor(0.012 * rate);
+        for (var k = 0; k < knockN; k++) {
+          var tk = k / rate;
+          var kEnv = (1 - tk / 0.012) * Math.exp(-tk * 220);
+          data[(s0 + k) % N] += Math.sin(2 * Math.PI * 85 * tk) * kEnv * 0.028 * vel;
         }
       }
-      function kick(t0) {
-        var n = Math.floor(0.2 * rate), s0 = Math.floor(t0 * rate), ph = 0;
-        for (var i = 0; i < n; i++) {
-          var t = i / rate, f = 48 + 70 * Math.exp(-t * 28);
-          ph += 2 * Math.PI * f / rate;
-          data[(s0 + i) % N] += Math.sin(ph) * Math.exp(-t * 16) * 0.2;
+
+      // Hợp âm tay trái rải arpeggio êm ái, bồng bềnh
+      var chordsLH = [
+        [[0.0, 36, 0.7], [0.5, 48, 0.5], [1.0, 55, 0.5], [1.5, 59, 0.5], [2.0, 62, 0.5], [2.5, 59, 0.5], [3.0, 55, 0.4], [3.5, 52, 0.4]],
+        [[0.0, 35, 0.7], [0.5, 47, 0.5], [1.0, 55, 0.5], [1.5, 59, 0.5], [2.0, 62, 0.5], [2.5, 59, 0.5], [3.0, 55, 0.4], [3.5, 52, 0.4]],
+        [[0.0, 33, 0.7], [0.5, 45, 0.5], [1.0, 52, 0.5], [1.5, 57, 0.5], [2.0, 60, 0.5], [2.5, 57, 0.5], [3.0, 52, 0.4], [3.5, 48, 0.4]],
+        [[0.0, 29, 0.7], [0.5, 41, 0.5], [1.0, 48, 0.5], [1.5, 53, 0.5], [2.0, 57, 0.5], [2.5, 53, 0.5], [3.0, 48, 0.4], [3.5, 45, 0.4]],
+        [[0.0, 38, 0.7], [0.5, 45, 0.5], [1.0, 52, 0.5], [1.5, 57, 0.5], [2.0, 60, 0.5], [2.5, 57, 0.5], [3.0, 52, 0.4], [3.5, 48, 0.4]],
+        [[0.0, 31, 0.7], [0.5, 43, 0.5], [1.0, 50, 0.5], [1.5, 55, 0.5], [2.0, 59, 0.5], [2.5, 55, 0.5], [3.0, 50, 0.4], [3.5, 47, 0.4]],
+        [[0.0, 40, 0.7], [0.5, 47, 0.5], [1.0, 52, 0.5], [1.5, 55, 0.5], [2.0, 59, 0.5], [2.5, 55, 0.5], [3.0, 52, 0.4], [3.5, 47, 0.4]],
+        [[0.0, 33, 0.7], [0.5, 45, 0.5], [1.0, 52, 0.5], [1.5, 57, 0.5], [2.0, 61, 0.5], [2.5, 57, 0.5], [3.0, 52, 0.4], [3.5, 49, 0.4]],
+        [[0.0, 38, 0.7], [0.5, 45, 0.5], [1.0, 52, 0.5], [1.5, 57, 0.5], [2.0, 60, 0.5], [2.5, 57, 0.5], [3.0, 52, 0.4], [3.5, 48, 0.4]],
+        [[0.0, 31, 0.7], [0.5, 43, 0.5], [1.0, 50, 0.5], [1.5, 55, 0.5], [2.0, 59, 0.5], [2.5, 55, 0.5], [3.0, 50, 0.4], [3.5, 47, 0.4]],
+        [[0.0, 36, 0.7], [0.5, 48, 0.5], [1.0, 55, 0.5], [1.5, 59, 0.5], [2.0, 64, 0.5], [2.5, 59, 0.5], [3.0, 55, 0.4], [3.5, 52, 0.4]],
+        [[0.0, 29, 0.7], [0.5, 41, 0.5], [1.0, 48, 0.5], [1.5, 53, 0.5], [2.0, 57, 0.5], [2.5, 53, 0.5], [3.0, 48, 0.4], [3.5, 45, 0.4]],
+        [[0.0, 38, 0.7], [0.5, 45, 0.5], [1.0, 52, 0.5], [1.5, 57, 0.5], [2.0, 60, 0.5], [2.5, 57, 0.5], [3.0, 52, 0.4], [3.5, 48, 0.4]],
+        [[0.0, 31, 0.7], [0.5, 43, 0.5], [1.0, 50, 0.5], [1.5, 55, 0.5], [2.0, 59, 0.5], [2.5, 55, 0.5], [3.0, 50, 0.4], [3.5, 47, 0.4]],
+        [[0.0, 36, 0.7], [0.5, 48, 0.5], [1.0, 55, 0.5], [1.5, 62, 0.5], [2.0, 64, 0.5], [2.5, 62, 0.5], [3.0, 55, 0.4], [3.5, 52, 0.4]],
+        [[0.0, 36, 0.6], [1.0, 48, 0.4], [1.5, 55, 0.4], [2.0, 59, 0.4], [2.5, 64, 0.4], [3.0, 67, 0.4]]
+      ];
+
+      // Giai điệu tay phải nhẹ nhàng, da diết
+      var melody = [
+        [0, 0.0, 76, 0.65, 2.2], [0, 2.5, 74, 0.55, 1.2],
+        [1, 0.0, 71, 0.65, 2.0], [1, 2.0, 72, 0.55, 0.9], [1, 3.0, 74, 0.58, 0.9],
+        [2, 0.0, 72, 0.65, 2.5], [2, 3.0, 69, 0.55, 0.9],
+        [3, 0.0, 67, 0.65, 1.5], [3, 1.5, 69, 0.55, 0.9], [3, 2.5, 71, 0.58, 0.9], [3, 3.25, 72, 0.55, 0.7],
+        [4, 0.0, 74, 0.65, 2.2], [4, 2.5, 76, 0.55, 1.2],
+        [5, 0.0, 74, 0.65, 2.0], [5, 2.0, 71, 0.55, 0.9], [5, 3.0, 72, 0.58, 0.9],
+        [6, 0.0, 67, 0.65, 2.5], [6, 3.0, 71, 0.55, 0.9],
+        [7, 0.0, 69, 0.65, 2.2], [7, 2.5, 71, 0.55, 0.7], [7, 3.25, 72, 0.58, 0.7],
+        [8, 0.0, 74, 0.68, 1.8], [8, 2.0, 76, 0.60, 0.9], [8, 3.0, 77, 0.65, 0.9],
+        [9, 0.0, 79, 0.72, 2.2], [9, 2.5, 77, 0.60, 0.7], [9, 3.25, 76, 0.60, 0.7],
+        [10, 0.0, 76, 0.70, 2.5], [10, 2.5, 74, 0.58, 0.7], [10, 3.25, 72, 0.60, 0.7],
+        [11, 0.0, 72, 0.68, 2.0], [11, 2.0, 71, 0.55, 0.9], [11, 3.0, 69, 0.55, 0.9],
+        [12, 0.0, 69, 0.65, 1.8], [12, 2.0, 71, 0.55, 0.9], [12, 3.0, 72, 0.60, 0.9],
+        [13, 0.0, 74, 0.65, 2.2], [13, 2.5, 72, 0.55, 0.7], [13, 3.25, 71, 0.55, 0.7],
+        [14, 0.0, 72, 0.65, 3.0], [14, 3.0, 76, 0.50, 1.0],
+        [15, 0.0, 79, 0.55, 3.8], [15, 2.0, 84, 0.45, 3.0]
+      ];
+
+      for (var b = 0; b < chordsLH.length; b++) {
+        var barT = b * 4 * beat;
+        var evs = chordsLH[b];
+        for (var e = 0; e < evs.length; e++) {
+          addNote(barT + evs[e][0] * beat, evs[e][1], evs[e][2] * 0.7, 3.2);
         }
       }
-      var seed = 7;
-      function noise() { seed = (seed * 16807) % 2147483647; return seed / 1073741823.5 - 1; }
-      function hat(t0, amp) {
-        var n = Math.floor(0.05 * rate), s0 = Math.floor(t0 * rate), prev = 0;
-        for (var i = 0; i < n; i++) {
-          var x = noise(), v = x - prev;
-          prev = x;
-          data[(s0 + i) % N] += v * Math.exp(-i / rate * 70) * amp;
+
+      for (var mIdx = 0; mIdx < melody.length; mIdx++) {
+        var ev = melody[mIdx];
+        var tM = (ev[0] * 4 + ev[1]) * beat;
+        addNote(tM, ev[2], ev[3], ev[4] * beat);
+      }
+
+      // Âm hưởng thùng đàn gỗ (Multi-tap warm soundboard echo)
+      var taps = [
+        [Math.floor(0.08 * rate), 0.18],
+        [Math.floor(0.16 * rate), 0.12],
+        [Math.floor(0.25 * rate), 0.08]
+      ];
+      var reverb = new Float32Array(N);
+      for (var tp = 0; tp < taps.length; tp++) {
+        var delay = taps[tp][0], tapGain = taps[tp][1];
+        for (var s = 0; s < N; s++) {
+          var src = (s - delay + N) % N;
+          reverb[s] += data[src] * tapGain;
         }
       }
-      for (var b = 0; b < bars; b++) {
-        var ch = chords[b % 4], t0 = b * 4 * beat;
-        ch.forEach(function (m) {
-          note(t0, 4 * beat, mf(m), 0.032, { attack: 0.5, release: 0.9, h2: 0.12 });
-          note(t0, 4 * beat, mf(m) * 1.004, 0.026, { attack: 0.7, release: 0.9 });
-        });
-        note(t0, 2 * beat * 0.95, mf(ch[0] - 12), 0.15, { attack: 0.02, decay: 1.1, release: 0.2, h2: 0.25 });
-        note(t0 + 2 * beat, 2 * beat * 0.95, mf((b % 2 ? ch[2] : ch[0]) - 12), 0.13,
-          { attack: 0.02, decay: 1.1, release: 0.2, h2: 0.25 });
-        for (var k = 0; k < 8; k++) {
-          note(t0 + k * beat / 2, beat / 2, mf(ch[arp[k]] + 12), 0.055, { attack: 0.005, decay: 5, release: 0.15, h2: 0.1 });
-        }
-        if (b >= 4) {
-          melody[b - 4].forEach(function (m, q) {
-            if (m) note(t0 + q * beat, beat * 0.9, mf(m), 0.06, { attack: 0.005, decay: 2.6, release: 0.35, h3: 0.08 });
-          });
-        }
-        kick(t0); kick(t0 + 2 * beat);
-        for (var q = 0; q < 4; q++) hat(t0 + q * beat + beat / 2, q % 2 ? 0.035 : 0.025);
+      for (s = 0; s < N; s++) data[s] += reverb[s];
+
+      // Bộ lọc khử DC offset (DC blocker) giúp âm thanh trong trẻo, không bị ù méo
+      var prevX = 0, prevY = 0;
+      for (var d = 0; d < N; d++) {
+        var x = data[d];
+        var y = x - prevX + 0.995 * prevY;
+        data[d] = y;
+        prevX = x;
+        prevY = y;
       }
+
       var peak = 0;
-      for (var i = 0; i < N; i++) peak = Math.max(peak, Math.abs(data[i]));
-      var g = peak > 0 ? 0.5 / peak : 1;
-      for (i = 0; i < N; i++) data[i] *= g;
+      for (var p = 0; p < N; p++) peak = Math.max(peak, Math.abs(data[p]));
+      var g = peak > 0 ? 0.72 / peak : 1;
+      for (p = 0; p < N; p++) data[p] *= g;
+
       var buf = c.createBuffer(1, N, rate);
       buf.getChannelData(0).set(data);
       return buf;
@@ -383,7 +460,7 @@
         if (!c) return;
         if (!musicBuf) musicBuf = buildMusic(c);
         musicGain = c.createGain();
-        musicGain.gain.value = 0.55;
+        musicGain.gain.value = 0.42;
         musicNode = c.createBufferSource();
         musicNode.buffer = musicBuf;
         musicNode.loop = true;
